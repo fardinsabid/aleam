@@ -1,52 +1,20 @@
-# Include core package files
+# Core package files
 include README.md
 include LICENSE
 include requirements.txt
 include pyproject.toml
 include setup.py
-include MANIFEST.in
 
-# Include documentation
-recursive-include docs *.md
-recursive-include docs *.rst
-recursive-include docs *.html
-include ALEAM_RESEARCH_PAPER.md
-
-# Include examples (optional for distribution)
-recursive-include examples *.py
-recursive-include examples *.md
-
-# Include test files (for source distribution)
-recursive-include tests *.py
-recursive-include tests *.txt
-
-# Include benchmark files
-recursive-include benchmarks *.py
-
-# Include all Python source files
+# Include all Aleam source files
 recursive-include aleam *.py
 recursive-include aleam *.pyi
-recursive-include aleam *.pxd
 recursive-include aleam *.pyx
+recursive-include aleam *.pxd
 
-# Include package data
+# Include type hints
 include aleam/py.typed
-recursive-include aleam *.txt
-recursive-include aleam *.json
-recursive-include aleam *.yaml
 
-# Include configuration files
-include .gitignore
-include .pre-commit-config.yaml
-include .coveragerc
-include .flake8
-include .mypy.ini
-
-# Include GitHub workflows (optional for source)
-recursive-include .github *.yml
-recursive-include .github *.yaml
-
-# Exclude unnecessary files from distribution
+# Exclude all compiled files
 global-exclude *.pyc
 global-exclude *.pyo
 global-exclude *.pyd
@@ -55,6 +23,8 @@ global-exclude *.dll
 global-exclude *.dylib
 global-exclude *.o
 global-exclude *.a
+
+# Exclude temporary and cache files
 global-exclude *.log
 global-exclude *.tmp
 global-exclude *.swp
@@ -63,57 +33,34 @@ global-exclude *~
 global-exclude .DS_Store
 global-exclude Thumbs.db
 global-exclude .coverage
-global-exclude coverage.xml
 global-exclude .pytest_cache
 global-exclude .mypy_cache
 global-exclude .ruff_cache
 global-exclude .benchmarks
+global-exclude .tox
+global-exclude .nox
 
-# Exclude virtual environments
+# Exclude development directories (not for PyPI)
+prune tests
+prune benchmarks
+prune examples
+prune docs
+prune .github
+prune .vscode
+prune .idea
+prune .git
+prune build
+prune dist
+prune *.egg-info
 prune ai-env
 prune venv
 prune env
 prune .venv
 prune .env
-
-# Exclude build artifacts
-prune build
-prune dist
-prune *.egg-info
-
-# Exclude documentation build
-prune docs/_build
-prune site
-
-# Exclude data directories (if any)
 prune data
 prune outputs
 prune logs
-
-# Exclude IDE files
-prune .vscode
-prune .idea
-prune .pycharm_helpers
-
-# Exclude OS specific files
-prune .github
-!include .github/workflows/*.yml
-prune .git
-
-# Exclude notebooks
+prune htmlcov
+prune site
 prune .ipynb_checkpoints
 prune notebooks
-
-# Exclude test artifacts
-prune .tox
-prune .nox
-prune htmlcov
-
-# Include only what's necessary for the package
-graft aleam
-graft docs
-include README.md
-include LICENSE
-include requirements.txt
-include pyproject.toml
-include setup.py
