@@ -30,8 +30,12 @@ extern "C" {
 }
 """
 
-# CUDA kernel for normal distribution (Box-Muller)
+# CUDA kernel for normal distribution (Box-Muller) - FIXED with M_PI definition
 NORMAL_KERNEL_CU = """
+#ifndef M_PI
+#define M_PI 3.14159265358979323846
+#endif
+
 __device__ float box_muller(unsigned long long seed, int idx, float mu, float sigma) {
     // Two independent seeds
     unsigned long long s1 = seed ^ (idx * 2);
