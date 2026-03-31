@@ -408,9 +408,9 @@ aleam/
 
 ## 🙏 Acknowledgments
 
-- **Neuphonic** for inspiring true randomness in AI
-- **BLAKE2** team for the cryptographic hash
+- **BLAKE2** team for the cryptographic hash function
 - **Open-source community** for entropy source implementations
+- **Python** community for the amazing ecosystem
 
 ---
 
