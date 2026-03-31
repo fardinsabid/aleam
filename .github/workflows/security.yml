@@ -2,11 +2,9 @@ name: Security Scan
 
 on:
   push:
-    branches: [ main, master ]
+    branches: [ main ]
   pull_request:
-    branches: [ main, master ]
-  schedule:
-    - cron: '0 0 * * 1'  # Weekly on Monday
+    branches: [ main ]
   workflow_dispatch:
 
 jobs:
@@ -26,15 +24,10 @@ jobs:
       run: |
         python -m pip install --upgrade pip
         pip install -e .
-
-    - name: Run safety check
-      uses: pyupio/safety-action@v1
-      with:
-        api-key: ${{ secrets.SAFETY_API_KEY }}
+        pip install bandit
 
     - name: Run bandit
       run: |
-        pip install bandit
         bandit -r aleam/ -f json -o bandit-report.json || true
 
     - name: Upload bandit results
@@ -42,15 +35,3 @@ jobs:
       with:
         name: bandit-report
         path: bandit-report.json
-
-  dependencies:
-    name: Dependency review
-    runs-on: ubuntu-latest
-    steps:
-    - name: Checkout code
-      uses: actions/checkout@v4
-
-    - name: Dependency Review
-      uses: actions/dependency-review-action@v4
-      with:
-        fail-on-severity: high

@@ -2,11 +2,9 @@ name: Benchmarks
 
 on:
   push:
-    branches: [ main, master ]
+    branches: [ main ]
   pull_request:
-    branches: [ main, master ]
-  schedule:
-    - cron: '0 0 * * 0'  # Weekly on Sunday
+    branches: [ main ]
   workflow_dispatch:
 
 jobs:
@@ -26,25 +24,26 @@ jobs:
       run: |
         python -m pip install --upgrade pip
         pip install -e .
-        pip install pytest pytest-benchmark numpy
+        pip install numpy
 
     - name: Run benchmarks
       run: |
-        pytest benchmarks/ --benchmark-only --benchmark-json=benchmark.json
+        python -c "
+import time
+import aleam as al
 
-    - name: Upload benchmark results
-      uses: actions/upload-artifact@v4
-      with:
-        name: benchmark-results
-        path: benchmark.json
+rng = al.Aleam()
+iterations = 100000
 
-    - name: Compare with previous benchmarks
-      uses: benchmark-action/github-action-benchmark@v1
-      with:
-        tool: 'pytest'
-        output-file-path: benchmark.json
-        github-token: ${{ secrets.GITHUB_TOKEN }}
-        alert-threshold: '200%'
-        comment-on-alert: true
-        fail-on-alert: false
-```
+start = time.time()
+for _ in range(iterations):
+    rng.random()
+elapsed = time.time() - start
+print(f'Random: {iterations/elapsed:,.0f} ops/sec')
+
+start = time.time()
+for _ in range(iterations):
+    rng.gauss(0, 1)
+elapsed = time.time() - start
+print(f'Gauss: {iterations/elapsed:,.0f} ops/sec')
+"

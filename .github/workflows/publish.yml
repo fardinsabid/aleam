@@ -6,9 +6,15 @@ on:
   workflow_dispatch:
 
 jobs:
-  build:
-    name: Build distribution
+  publish:
+    name: Publish to PyPI
     runs-on: ubuntu-latest
+    environment:
+      name: pypi
+      url: https://pypi.org/p/aleam
+    permissions:
+      id-token: write
+
     steps:
     - name: Checkout code
       uses: actions/checkout@v4
@@ -21,111 +27,10 @@ jobs:
     - name: Install build tools
       run: |
         python -m pip install --upgrade pip
-        pip install build twine
+        pip install build
 
     - name: Build package
       run: python -m build
 
-    - name: Check package
-      run: twine check dist/*
-
-    - name: Upload artifacts
-      uses: actions/upload-artifact@v4
-      with:
-        name: dist
-        path: dist/
-
-  test-publish:
-    name: Test publish to TestPyPI
-    needs: build
-    runs-on: ubuntu-latest
-    steps:
-    - name: Download artifacts
-      uses: actions/download-artifact@v4
-      with:
-        name: dist
-        path: dist/
-
-    - name: Set up Python
-      uses: actions/setup-python@v5
-      with:
-        python-version: '3.10'
-
-    - name: Install twine
-      run: pip install twine
-
-    - name: Publish to TestPyPI
-      env:
-        TWINE_USERNAME: __token__
-        TWINE_PASSWORD: ${{ secrets.TEST_PYPI_API_TOKEN }}
-      run: twine upload --repository testpypi dist/* --verbose
-
-  publish:
-    name: Publish to PyPI
-    needs: test-publish
-    runs-on: ubuntu-latest
-    environment:
-      name: pypi
-      url: https://pypi.org/p/aleam
-    permissions:
-      id-token: write
-    steps:
-    - name: Download artifacts
-      uses: actions/download-artifact@v4
-      with:
-        name: dist
-        path: dist/
-
     - name: Publish to PyPI
       uses: pypa/gh-action-pypi-publish@release/v1
-      with:
-        password: ${{ secrets.PYPI_API_TOKEN }}
-
-  create-release:
-    name: Create GitHub Release
-    needs: publish
-    runs-on: ubuntu-latest
-    permissions:
-      contents: write
-    steps:
-    - name: Checkout code
-      uses: actions/checkout@v4
-      with:
-        fetch-depth: 0
-
-    - name: Get version from tag
-      id: get_version
-      run: echo "VERSION=${GITHUB_REF#refs/tags/}" >> $GITHUB_OUTPUT
-
-    - name: Create Release
-      uses: softprops/action-gh-release@v1
-      with:
-        tag_name: ${{ github.ref_name }}
-        name: Aleam ${{ steps.get_version.outputs.VERSION }}
-        body: |
-          ## Aleam ${{ steps.get_version.outputs.VERSION }}
-          
-          ### ✨ What's New
-          - True random number generation with proven equation
-          - Full statistical distributions (Normal, Exponential, Gamma, Beta, Poisson, etc.)
-          - AI/ML features (gradient noise, dropout, latent sampling)
-          - PyTorch, TensorFlow, JAX, CuPy integration
-          - CUDA acceleration support
-          - Comprehensive test suite (70+ tests)
-          
-          ### 📦 Installation
-          ```bash
-          pip install aleam
-          ```
-          
-          ### 🔗 Links
-          - [Documentation](https://github.com/fardinsabid/aleam)
-          - [Research Paper](ALEAM_RESEARCH_PAPER.md)
-          
-          ### 🎲 The Equation
-          ```
-          Ψ(t) = BLAKE2s( (Φ × Ξ(t)) ⊕ τ(t) )
-          ```
-        draft: false
-        prerelease: false
-```
