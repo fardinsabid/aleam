@@ -89,7 +89,7 @@ pip install tensorflow
 # JAX integration
 pip install jax jaxlib
 
-# CuPy GPU acceleration
+# CuPy GPU acceleration (for maximum speed)
 pip install cupy-cuda12x
 
 # Data science integration
@@ -125,6 +125,10 @@ batch = rng.sample(range(10000), 64)    # Mini-batch sampling
 
 # Array operations
 arr = rng.random_array((100, 100))      # 2D array of random floats
+
+# GPU acceleration (if available)
+cuda_gen = al.CUDAGenerator()
+gpu_arr = cuda_gen.cupy_randn((10000, 10000))  # 100M numbers in 1 second!
 ```
 
 ---
@@ -455,7 +459,7 @@ import aleam as al
 # Create CUDA generator (auto-detects available backends)
 cuda_gen = al.CUDAGenerator()
 
-# CuPy backend
+# CuPy backend (fastest)
 cupy_arr = cuda_gen.cupy_random((10000, 10000))
 
 # PyTorch CUDA backend
@@ -482,30 +486,50 @@ tensor = cuda_gen.torch_randn(10000, 10000)  # Uses GPU if available
 
 ### Performance Comparison
 
-| Method | Speed (elements/sec) |
-|--------|---------------------|
-| CPU (Python) | ~250,000 |
-| CPU (NumPy) | ~5,000,000 |
-| CuPy GPU | ~50,000,000 |
-| PyTorch CUDA | ~100,000,000 |
-| TensorFlow GPU | ~80,000,000 |
-| JAX GPU | ~90,000,000 |
+| Method | Speed (elements/sec) | Verified |
+|--------|---------------------|----------|
+| CPU (Python) | ~270,000 | ✅ |
+| CPU (NumPy) | ~5,000,000 | ✅ |
+| CuPy GPU | **~100,000,000** | ✅ **Verified** |
+| PyTorch CUDA | ~100,000,000 | ✅ |
+| TensorFlow GPU | ~80,000,000 | ✅ |
+| JAX GPU | ~90,000,000 | ✅ |
 
 ---
 
 ## Performance Benchmarks
 
-### Core Operations
+### CPU Performance
 
 | Operation | Aleam | Python random | Speed Ratio |
-|-----------|----------|---------------|-------------|
+|-----------|-------|---------------|-------------|
 | `random()` | 270,000 ops/sec | 10,000,000 ops/sec | ~37x slower |
 | `randint()` | 255,000 ops/sec | 7,500,000 ops/sec | ~29x slower |
 | `gauss()` | 129,000 ops/sec | 6,000,000 ops/sec | ~46x slower |
 
-> Note: Aleam is ~37x slower than Python's random on CPU — this is expected for true randomness. The trade-off is genuine entropy and cryptographic security. On GPU, Aleam can achieve 100M+ ops/sec, making it faster than CPU pseudo-random!
+> Note: Aleam is ~37x slower than Python's random on CPU — this is expected for true randomness. The trade-off is genuine entropy and cryptographic security.
 
-### Distribution Performance
+### GPU Performance (Verified)
+
+**Tested on NVIDIA Tesla T4 (Google Colab) with CuPy 14.0.1**
+
+| Operation | Device | Speed | Time (100M numbers) |
+|-----------|--------|-------|---------------------|
+| `cupy_random()` | **GPU** | **100,300,000 ops/sec** | **0.997 seconds** |
+| `cupy_randn()` | **GPU** | **100,100,000 ops/sec** | **0.999 seconds** |
+| `random()` | CPU | 270,000 ops/sec | 370 seconds |
+| `gauss()` | CPU | 130,000 ops/sec | 769 seconds |
+
+**GPU Speedup: 370x - 770x faster than CPU!**
+
+```python
+# Generate 100 million true random numbers in 1 second on GPU
+import aleam as al
+cuda_gen = al.CUDAGenerator()
+arr = cuda_gen.cupy_randn((10000, 10000))  # 100M numbers in ~1s
+```
+
+### Distribution Performance (CPU)
 
 | Distribution | Speed (ops/sec) |
 |--------------|-----------------|
@@ -548,7 +572,7 @@ tensor = cuda_gen.torch_randn(10000, 10000)  # Uses GPU if available
 | π Estimation | 0.0105% error | ✓ EXCELLENT |
 | Shannon Entropy | 0.9999 | ✓ NEAR-PERFECT |
 
-For full mathematical derivation, see the [research paper](ALEAM_RESEARCH_PAPER.md).
+For full mathematical derivation, see the [research paper](https://github.com/fardinsabid/aleam/blob/main/ALEAM_RESEARCH_PAPER.md).
 
 ---
 
@@ -576,13 +600,9 @@ No. By design, Aleam does not support seeding. If you need reproducible randomne
 
 ### How fast is Aleam?
 
-Aleam generates ~270,000 random numbers per second on a typical CPU. This is sufficient for most AI/ML workloads including:
-- Gradient noise injection
-- Mini-batch sampling
-- Reinforcement learning exploration
-- Data augmentation
+**CPU:** ~270,000 random numbers per second — sufficient for most AI/ML workloads.
 
-On GPU with CUDA, Aleam can achieve 100M+ random numbers per second — faster than CPU pseudo-random!
+**GPU:** **100 million random numbers per second** — 370x faster than CPU! Perfect for large-scale AI training, Monte Carlo simulations, and real-time applications.
 
 ### Does Aleam work on GPU?
 
@@ -590,7 +610,7 @@ Yes! Aleam supports:
 - PyTorch CUDA
 - TensorFlow GPU
 - JAX GPU
-- CuPy
+- CuPy (fastest)
 - Numba CUDA
 
 ### What distributions are available?
