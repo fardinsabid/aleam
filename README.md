@@ -400,9 +400,8 @@ aleam/
 |---|---|
 | 📦 PyPI | [pypi.org/project/aleam](https://pypi.org/project/aleam) |
 | 🐛 Issues | [GitHub Issues](https://github.com/fardinsabid/aleam/issues) |
-| 📖 Documentation | [GitHub Docs](https://github.com/fardinsabid/aleam/docs) |
+| 📖 Documentation | [GitHub Docs](https://github.com/fardinsabid/aleam/blob/main/docs/index.md) |
 | 📄 Research Paper | [ALEAM_RESEARCH_PAPER.md](ALEAM_RESEARCH_PAPER.md) |
-| 💬 Discussions | [GitHub Discussions](https://github.com/fardinsabid/aleam/discussions) |
 
 ---
 
@@ -425,7 +424,7 @@ aleam/
 True randomness. No recursion. No state. Just entropy.
 ```
 
-After 20+ hours of discovery, testing, and refinement — the equation is proven.
+After 2 days of discovery, testing, and refinement — the equation is proven.
 
 <br>
 
@@ -435,4 +434,3 @@ After 20+ hours of discovery, testing, and refinement — the equation is proven
 **If you find this project useful, please ⭐ star it on GitHub!**
 
 </div>
-```

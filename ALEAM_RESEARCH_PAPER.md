@@ -6,7 +6,13 @@
 
 ## Abstract
 
-This paper presents **Aleam**, a novel true random number generator designed specifically for artificial intelligence and machine learning applications. Unlike traditional pseudo-random number generators (PRNGs) that rely on recursive deterministic formulas, Aleam introduces a non-recursive, stateless algorithm that sources true entropy directly from the operating system. The core equation, `Ψ(t) = BLAKE2s( (Φ × Ξ(t)) ⊕ τ(t) )`, combines golden ratio mixing, temporal anchoring, and cryptographic hashing to produce uniformly distributed, independent random numbers with provable entropy guarantees. Statistical validation demonstrates near-perfect uniformity (χ² = 21.40, critical = 30.14), zero autocorrelation (max |r| = 0.0094), and high entropy (0.9999 normalized). Performance benchmarks show 249,508 operations per second, making Aleam suitable for production AI systems requiring genuine randomness for exploration, generalization, and creativity.
+This paper presents **Aleam**, a novel true random number generator designed specifically for artificial intelligence and machine learning applications. Unlike traditional pseudo-random number generators (PRNGs) that rely on recursive deterministic formulas, Aleam introduces a non-recursive, stateless algorithm that sources true entropy directly from the operating system. The core equation,
+
+$$
+\Psi(t) = \text{BLAKE2s}\bigl( (\Phi \times \Xi(t)) \oplus \tau(t) \bigr),
+$$
+
+combines golden ratio mixing, temporal anchoring, and cryptographic hashing to produce uniformly distributed, independent random numbers with provable entropy guarantees. Statistical validation demonstrates near-perfect uniformity ($\chi^2 = 21.40$, critical $= 30.14$), zero autocorrelation ($\max |r| = 0.0094$), and high entropy ($0.9999$ normalized). Performance benchmarks show $249{,}508$ operations per second, making Aleam suitable for production AI systems requiring genuine randomness for exploration, generalization, and creativity.
 
 **Keywords:** True Random Number Generation, Artificial Intelligence, Machine Learning, Entropy, Golden Ratio, Cryptographic Hashing, Non-Recursive Algorithms
 
@@ -27,9 +33,9 @@ Modern artificial intelligence systems rely heavily on randomness for:
 
 However, virtually all AI frameworks currently use **pseudo-random number generators (PRNGs)** such as the Mersenne Twister, PCG, or linear congruential generators. These PRNGs are mathematically defined by recursive formulas:
 
-```
-xₙ₊₁ = (a·xₙ + c) mod m
-```
+$$
+x_{n+1} = (a \cdot x_n + c) \mod m
+$$
 
 This recursion creates several fundamental limitations:
 
@@ -66,81 +72,81 @@ This paper introduces:
 
 Aleam is defined by the fundamental equation:
 
-```
-Ψ(t) = H( (Φ × Ξ(t)) ⊕ τ(t) )
-```
+$$
+\Psi(t) = H\bigl( (\Phi \times \Xi(t)) \oplus \tau(t) \bigr)
+$$
 
 Where:
 
 | Symbol | Definition | Mathematical Properties |
 |--------|------------|------------------------|
-| **Ψ(t)** | Output random variable | Ψ(t) ∈ [0, 1) ⊂ ℝ |
-| **H** | Cryptographic hash | BLAKE2s: {0,1}* → {0,1}⁶⁴ |
-| **Φ** | Golden ratio prime | Φ = ⌊2⁶⁴ / φ⌋, φ = (1+√5)/2 |
-| **Ξ(t)** | True entropy source | Ξ(t) ~ Uniform(0, 2¹²⁸) |
-| **⊕** | XOR operator | Bitwise XOR over GF(2)⁶⁴ |
-| **τ(t)** | Temporal anchor | τ(t) = ⌊t × 10⁹⌋ mod 2⁶⁴ |
+| $\Psi(t)$ | Output random variable | $\Psi(t) \in [0, 1) \subset \mathbb{R}$ |
+| $H$ | Cryptographic hash | BLAKE2s: $\{0,1\}^* \to \{0,1\}^{64}$ |
+| $\Phi$ | Golden ratio prime | $\Phi = \lfloor 2^{64} / \varphi \rfloor$, $\varphi = \frac{1+\sqrt{5}}{2}$ |
+| $\Xi(t)$ | True entropy source | $\Xi(t) \sim \text{Uniform}(0, 2^{128})$ |
+| $\oplus$ | XOR operator | Bitwise XOR over $\text{GF}(2)^{64}$ |
+| $\tau(t)$ | Temporal anchor | $\tau(t) = \lfloor t \times 10^9 \rfloor \mod 2^{64}$ |
 
 ### 2.2 The Golden Ratio Prime
 
-The constant Φ is defined as:
+The constant $\Phi$ is defined as:
 
-```
-Φ = 0x9E3779B97F4A7C15 = ⌊2⁶⁴ / φ⌋
-```
+$$
+\Phi = 0x9E3779B97F4A7C15 = \lfloor 2^{64} / \varphi \rfloor
+$$
 
-where φ = (1+√5)/2 ≈ 1.618033988749895 is the golden ratio.
+where $\varphi = \frac{1+\sqrt{5}}{2} \approx 1.618033988749895$ is the golden ratio.
 
-**Properties of Φ:**
+**Properties of $\Phi$:**
 
-1. **Bijectivity**: Since Φ is odd, multiplication modulo 2⁶⁴ is a bijection on ℤ/2⁶⁴ℤ
-2. **Maximal Equidistribution**: The sequence {Φ·k mod 2⁶⁴} is maximally equidistributed in one dimension
-3. **Irrationality**: φ is irrational, preventing simple rational relationships
+1. **Bijectivity**: Since $\Phi$ is odd, multiplication modulo $2^{64}$ is a bijection on $\mathbb{Z}/2^{64}\mathbb{Z}$
+2. **Maximal Equidistribution**: The sequence $\{\Phi \cdot k \mod 2^{64}\}$ is maximally equidistributed in one dimension
+3. **Irrationality**: $\varphi$ is irrational, preventing simple rational relationships
 4. **Self-Similarity**: The golden ratio appears throughout natural systems, from spiral galaxies to quantum mechanics
 
-### 2.3 Entropy Source Ξ(t)
+### 2.3 Entropy Source $\Xi(t)$
 
 The entropy source is defined as:
 
-```
-Ξ(t) = ℰ(128)
-```
+$$
+\Xi(t) = \mathcal{E}(128)
+$$
 
-where ℰ(b) returns b bits of true entropy from the operating system's entropy pool (e.g., `/dev/urandom` on Unix systems).
+where $\mathcal{E}(b)$ returns $b$ bits of true entropy from the operating system's entropy pool (e.g., `/dev/urandom` on Unix systems).
 
 **Entropy Guarantees:**
 
-```
-H∞(Ξ(t)) ≥ 128 bits per call
-```
+$$
+H_{\infty}(\Xi(t)) \geq 128 \text{ bits per call}
+$$
 
-where H∞ is the min-entropy. This exceeds the 64-bit output space, ensuring each output contains at least 64 bits of true entropy.
+where $H_{\infty}$ is the min-entropy. This exceeds the 64-bit output space, ensuring each output contains at least 64 bits of true entropy.
 
-### 2.4 Temporal Anchor τ(t)
+### 2.4 Temporal Anchor $\tau(t)$
 
 The temporal anchor is defined as:
 
-```
-τ(t) = ⌊t × 10⁹⌋ mod 2⁶⁴
-```
+$$
+\tau(t) = \lfloor t \times 10^9 \rfloor \mod 2^{64}
+$$
 
-where t is the system time in seconds since the epoch.
+where $t$ is the system time in seconds since the epoch.
 
 **Properties:**
-- **Monotonic**: τ(t) strictly increases with time
-- **Independent**: No correlation with Ξ(t)
-- **High Precision**: Nanosecond resolution (10⁹ divisions per second)
+- **Monotonic**: $\tau(t)$ strictly increases with time
+- **Independent**: No correlation with $\Xi(t)$
+- **High Precision**: Nanosecond resolution ($10^9$ divisions per second)
 
-### 2.5 Cryptographic Hash H
+### 2.5 Cryptographic Hash $H$
 
 Aleam uses BLAKE2s, a cryptographic hash function with the following properties:
 
-```
-H: {0,1}* → {0,1}⁶⁴
-```
+$$
+H: \{0,1\}^* \to \{0,1\}^{64}
+$$
 
 **Security Properties:**
-- **Collision Resistance**: Finding x ≠ y with H(x) = H(y) requires ~2³² operations
+- **Collision Resistance**: Finding $x \neq y$ with $H(x) = H(y)$ requires $\sim 2^{32}$ operations
 - **Random Oracle Behavior**: Output is computationally indistinguishable from uniform
 - **Speed**: Approximately 200 cycles per byte on modern CPUs
 
@@ -150,45 +156,45 @@ H: {0,1}* → {0,1}⁶⁴
 
 ### 3.1 Uniformity Proof
 
-**Theorem 1 (Uniform Distribution):** For any a,b ∈ [0,1) with a < b:
+**Theorem 1 (Uniform Distribution):** For any $a,b \in [0,1)$ with $a < b$:
 
-```
-P(Ψ(t) ∈ [a,b)) = b - a
-```
+$$
+P(\Psi(t) \in [a,b)) = b - a
+$$
 
-**Proof:** Let U = H(x) for x ∼ Uniform({0,1}⁶⁴). Since BLAKE2s is a cryptographic hash, its output is computationally indistinguishable from uniform. The mapping ψ → ψ/2⁶⁴ preserves uniformity, giving Ψ(t) ∼ Uniform(0,1).
+**Proof:** Let $U = H(x)$ for $x \sim \text{Uniform}(\{0,1\}^{64})$. Since BLAKE2s is a cryptographic hash, its output is computationally indistinguishable from uniform. The mapping $\psi \to \psi / 2^{64}$ preserves uniformity, giving $\Psi(t) \sim \text{Uniform}(0,1)$.
 
 ### 3.2 Independence Proof
 
-**Theorem 2 (Statistical Independence):** For any distinct times t₁, t₂, ..., tₙ:
+**Theorem 2 (Statistical Independence):** For any distinct times $t_1, t_2, \ldots, t_n$:
 
-```
-P(Ψ(t₁) = y₁, ..., Ψ(tₙ) = yₙ) = ∏ᵢ P(Ψ(tᵢ) = yᵢ)
-```
+$$
+P(\Psi(t_1) = y_1, \ldots, \Psi(t_n) = y_n) = \prod_{i=1}^{n} P(\Psi(t_i) = y_i)
+$$
 
-**Proof:** The algorithm uses fresh entropy Ξ(tᵢ) for each call. Since the entropy source provides independent samples, and the temporal anchor τ(t) is unique for each call (nanosecond precision), the inputs to H are independent. A cryptographic hash of independent inputs yields independent outputs.
+**Proof:** The algorithm uses fresh entropy $\Xi(t_i)$ for each call. Since the entropy source provides independent samples, and the temporal anchor $\tau(t)$ is unique for each call (nanosecond precision), the inputs to $H$ are independent. A cryptographic hash of independent inputs yields independent outputs.
 
 ### 3.3 Entropy Analysis
 
 **Theorem 3 (Entropy Lower Bound):**
 
-```
-H∞(Ψ(t)) ≥ 64 bits
-```
+$$
+H_{\infty}(\Psi(t)) \geq 64 \text{ bits}
+$$
 
-**Proof:** Each call consumes at least 128 bits of true entropy. The transformation (Φ × Ξ ⊕ τ) is bijective for fixed τ, preserving entropy. A cryptographic hash cannot reduce entropy below its output size (64 bits).
+**Proof:** Each call consumes at least 128 bits of true entropy. The transformation $(\Phi \times \Xi \oplus \tau)$ is bijective for fixed $\tau$, preserving entropy. A cryptographic hash cannot reduce entropy below its output size (64 bits).
 
 ### 3.4 Non-Recursive Property
 
-**Definition (Non-Recursive):** A generator is non-recursive if its output at time t does not depend on any previous outputs.
+**Definition (Non-Recursive):** A generator is non-recursive if its output at time $t$ does not depend on any previous outputs.
 
 Aleam satisfies this by construction:
 
-```
-Ψ(t) = f(Ξ(t), τ(t))
-```
+$$
+\Psi(t) = f(\Xi(t), \tau(t))
+$$
 
-where f has no internal state. This eliminates all recursive dependencies present in traditional PRNGs.
+where $f$ has no internal state. This eliminates all recursive dependencies present in traditional PRNGs.
 
 ---
 
@@ -216,18 +222,21 @@ Output: r ∈ [0, 1) ⊂ ℝ
 
 **Gaussian Distribution (Box-Muller Transform):**
 
-```
-Given U₁, U₂ ∼ Uniform(0,1):
-Z₀ = √(-2 ln U₁) · cos(2πU₂)
-Z₁ = √(-2 ln U₁) · sin(2πU₂)
-Z₀, Z₁ ∼ N(0,1)
-```
+Given $U_1, U_2 \sim \text{Uniform}(0,1)$:
+
+$$
+Z_0 = \sqrt{-2 \ln U_1} \cdot \cos(2\pi U_2), \quad Z_1 = \sqrt{-2 \ln U_1} \cdot \sin(2\pi U_2)
+$$
+
+$$
+Z_0, Z_1 \sim N(0,1)
+$$
 
 **Integer Sampling:**
 
-```
-randint(a,b) = a + ⌊random() × (b - a + 1)⌋
-```
+$$
+\text{randint}(a,b) = a + \lfloor \text{random}() \times (b - a + 1) \rfloor
+$$
 
 **Sampling Without Replacement (Fisher-Yates):**
 
@@ -276,15 +285,15 @@ We conducted 10 rigorous statistical tests on 2.55 million samples:
 
 | Test | Parameters | Samples | Expected | Observed |
 |------|------------|---------|----------|----------|
-| Mean | μ = 0.5 | 100,000 | 0.500000 | 0.499578 |
-| Variance | σ² = 1/12 | 100,000 | 0.083333 | 0.083154 |
-| Chi-Square | 20 bins | 10,000 | χ² < 30.14 | 21.400 |
-| Autocorrelation | lags 1-20 | 50,000 | \|r\| < 0.02 | 0.009375 |
-| Runs Test | median=0.5 | 50,000 | \|Z\| < 1.96 | 2.051 |
-| π Estimation | N=1M | 1,000,000 | 3.141593 | 3.141264 |
-| Integer Distribution | 10 bins | 10,000 | χ² < 16.92 | 10.588 |
+| Mean | $\mu = 0.5$ | 100,000 | 0.500000 | 0.499578 |
+| Variance | $\sigma^2 = 1/12$ | 100,000 | 0.083333 | 0.083154 |
+| Chi-Square | 20 bins | 10,000 | $\chi^2 < 30.14$ | 21.400 |
+| Autocorrelation | lags 1-20 | 50,000 | $\|r\| < 0.02$ | 0.009375 |
+| Runs Test | median=0.5 | 50,000 | $\|Z\| < 1.96$ | 2.051 |
+| $\pi$ Estimation | $N=10^6$ | 1,000,000 | 3.141593 | 3.141264 |
+| Integer Distribution | 10 bins | 10,000 | $\chi^2 < 16.92$ | 10.588 |
 | Shannon Entropy | 100 bins | 100,000 | 1.0 | 0.999901 |
-| Independence | triplets | 10,000 | repeats ≤ 2 | max = 1 |
+| Independence | triplets | 10,000 | repeats $\leq 2$ | max = 1 |
 
 ### 5.2 Results Analysis
 
@@ -294,7 +303,7 @@ We conducted 10 rigorous statistical tests on 2.55 million samples:
 
 **Normal Distribution:** Box-Muller transform produces Gaussian samples with mean 0.00234 (near zero) and variance 0.9752 (near 1.0).
 
-**Monte Carlo π:** Estimate error of 0.0105% demonstrates excellent sampling quality.
+**Monte Carlo $\pi$:** Estimate error of 0.0105% demonstrates excellent sampling quality.
 
 **Entropy:** Normalized Shannon entropy of 0.999901 indicates near-perfect randomness.
 
@@ -305,7 +314,7 @@ We conducted 10 rigorous statistical tests on 2.55 million samples:
 | Aleam Speed | 249,508 ops/sec |
 | Python Random Speed | 8,173,243 ops/sec |
 | Speed Ratio | 0.031x |
-| Latency per Call | 4.0 μs |
+| Latency per Call | 4.0 $\mu$s |
 
 The 30x performance difference is expected and acceptable for applications requiring true randomness. The speed remains sufficient for production AI workloads.
 
@@ -315,7 +324,7 @@ The 30x performance difference is expected and acceptable for applications requi
 
 ### 6.1 Reinforcement Learning Exploration
 
-Traditional RL uses ε-greedy with pseudo-random actions. Aleam enables:
+Traditional RL uses $\epsilon$-greedy with pseudo-random actions. Aleam enables:
 
 - **True exploration** of action space
 - **No deterministic patterns** in exploration strategy
@@ -350,7 +359,7 @@ SGD uses random mini-batch selection. Aleam provides:
 ## 7. Comparison with Existing Methods
 
 | Feature | Mersenne Twister | PCG | Python Random | Aleam |
-|---------|------------------|-----|---------------|----------|
+|---------|------------------|-----|---------------|-------|
 | Randomness Type | Pseudo | Pseudo | Pseudo | **True** |
 | Recursive | ✓ | ✓ | ✓ | **✗** |
 | Seeding Required | ✓ | ✓ | ✓ | **✗** |
@@ -358,7 +367,7 @@ SGD uses random mini-batch selection. Aleam provides:
 | Periodic | ✓ | ✓ | ✓ | **✗** |
 | Entropy Guarantee | None | None | None | **128 bits** |
 | Statistical Quality | Good | Good | Good | **Excellent** |
-| Speed (ops/sec) | ~10M | ~12M | ~8M | **~250K** |
+| Speed (ops/sec) | $\sim 10^7$ | $\sim 1.2 \times 10^7$ | $\sim 8 \times 10^6$ | $\sim 2.5 \times 10^5$ |
 
 Aleam trades speed for true randomness, which is essential for AI applications where genuine exploration matters more than maximum throughput.
 
@@ -405,12 +414,18 @@ Aleam trades speed for true randomness, which is essential for AI applications w
 
 ## 10. Conclusion
 
-This paper presented Aleam, a true random number generator designed specifically for artificial intelligence systems. The core equation, `Ψ(t) = BLAKE2s( (Φ × Ξ(t)) ⊕ τ(t) )`, combines golden ratio mixing, true entropy, temporal anchoring, and cryptographic hashing to produce uniformly distributed, independent random numbers with provable entropy guarantees.
+This paper presented Aleam, a true random number generator designed specifically for artificial intelligence systems. The core equation,
+
+$$
+\Psi(t) = \text{BLAKE2s}\bigl( (\Phi \times \Xi(t)) \oplus \tau(t) \bigr),
+$$
+
+combines golden ratio mixing, true entropy, temporal anchoring, and cryptographic hashing to produce uniformly distributed, independent random numbers with provable entropy guarantees.
 
 Statistical validation across 10 rigorous tests confirms:
-- **Uniform distribution** (χ² = 21.40 < 30.14)
-- **Zero autocorrelation** (max |r| = 0.0094)
-- **High entropy** (0.9999 normalized)
+- **Uniform distribution** ($\chi^2 = 21.40 < 30.14$)
+- **Zero autocorrelation** ($\max |r| = 0.0094$)
+- **High entropy** ($0.9999$ normalized)
 - **True independence** (no sequence patterns)
 
 Performance benchmarks (249,508 ops/sec) demonstrate practical usability for production AI workloads.
@@ -453,14 +468,14 @@ The author thanks the open-source community for contributions to cryptographic h
 |------|-------|----------|--------|
 | Mean | 0.499578 | 0.500000 | ✓ |
 | Variance | 0.083154 | 0.083333 | ✓ |
-| Chi-Square | 21.400 | < 30.14 | ✓ PASS |
-| Max Autocorr | 0.009375 | < 0.02 | ✓ |
-| Runs Z-Score | 2.051 | \|Z\| < 1.96 | ⚠️* |
-| π Error | 0.0105% | < 0.05% | ✓ |
-| Integer χ² | 10.588 | < 16.92 | ✓ |
+| Chi-Square | 21.400 | $< 30.14$ | ✓ PASS |
+| Max Autocorr | 0.009375 | $< 0.02$ | ✓ |
+| Runs Z-Score | 2.051 | $\|Z\| < 1.96$ | ⚠️* |
+| $\pi$ Error | 0.0105% | $< 0.05\%$ | ✓ |
+| Integer $\chi^2$ | 10.588 | $< 16.92$ | ✓ |
 | Entropy Norm | 0.999901 | 1.000 | ✓ |
 
-*Note: At 95% confidence, 5% of tests are expected to fall outside the range. The runs test result (Z=2.051) is within acceptable limits for true randomness.
+*Note: At 95% confidence, 5% of tests are expected to fall outside the range. The runs test result ($Z=2.051$) is within acceptable limits for true randomness.
 
 ---
 
@@ -473,9 +488,9 @@ pip install aleam
 ```
 
 ```python
-import aleam as ent
+import aleam as al
 
-rng = ent.Aleam()
+rng = al.Aleam()
 
 # Basic randomness
 x = rng.random()           # True random float
@@ -496,7 +511,7 @@ This work is released under the MIT License. See the LICENSE file for details.
 ---
 
 **Corresponding Author:** Fardin Sabid  
-**Email:** contact.fardinsabid@gmail.com
+**Email:** contact.fardinsabid@gmail.com  
 **Repository:** https://github.com/fardinsabid/aleam  
 **Paper Version:** v1.0 (March 2026)
 
@@ -505,4 +520,3 @@ This work is released under the MIT License. See the LICENSE file for details.
 *"True randomness is not a bug—it's a feature. Nature doesn't compute recursively, and neither should AI."*
 
 — Fardin Sabid, Creator of Aleam
-```

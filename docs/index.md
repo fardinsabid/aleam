@@ -509,7 +509,7 @@ tensor = cuda_gen.torch_randn(10000, 10000)  # Uses GPU if available
 
 | Distribution | Speed (ops/sec) |
 |--------------|-----------------|
-| `random()` | 275,000 |
+| `random()` | 270,000 |
 | `uniform()` | 253,000 |
 | `exponential()` | 248,000 |
 | `laplace()` | 236,000 |
@@ -608,7 +608,7 @@ Yes. Aleam provides array operations that return Python lists that can be conver
 
 ## License
 
-MIT License. See [LICENSE](LICENSE) for details.
+MIT License. See [LICENSE](https://github.com/fardinsabid/aleam/blob/main/LICENSE) for details.
 
 ---
 
@@ -619,11 +619,10 @@ MIT License. See [LICENSE](LICENSE) for details.
 | 📦 PyPI | [pypi.org/project/aleam](https://pypi.org/project/aleam) |
 | 🐛 Issues | [GitHub Issues](https://github.com/fardinsabid/aleam/issues) |
 | 📖 Source | [GitHub Repository](https://github.com/fardinsabid/aleam) |
-| 📄 Research Paper | [ALEAM_RESEARCH_PAPER.md](ALEAM_RESEARCH_PAPER.md) |
+| 📄 Research Paper | [ALEAM_RESEARCH_PAPER.md](https://github.com/fardinsabid/aleam/blob/main/ALEAM_RESEARCH_PAPER.md) |
 
 ---
 
 *"True randomness is not a bug—it's a feature. Nature doesn't compute recursively, and neither should AI."*
 
 — Fardin Sabid, Creator of Aleam
-```
