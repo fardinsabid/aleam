@@ -238,6 +238,11 @@ build/
 *.dylib
 *.pyd
 
+# Core dumps (crash files) - but don't ignore our core.py
+core.*
+*.core
+!core.py
+
 # Coverage reports
 .coverage
 .coverage.*
@@ -394,10 +399,6 @@ cache/
 # Debug symbols
 *.debug
 *.dbg
-
-# Core dumps
-core.*
-*.core
 
 # Swap files
 .swap
