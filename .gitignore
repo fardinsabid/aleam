@@ -1,0 +1,503 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+*.pyd
+*.pyo
+
+# Distribution / packaging
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+share/python-wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+pip-wheel-metadata/
+
+# PyInstaller
+*.manifest
+*.spec
+
+# Installer logs
+pip-log.txt
+pip-delete-this-directory.txt
+
+# Unit test / coverage reports
+htmlcov/
+.tox/
+.nox/
+.coverage
+.coverage.*
+.cache
+nosetests.xml
+coverage.xml
+*.cover
+*.py,cover
+.hypothesis/
+.pytest_cache/
+test-reports/
+
+# MyPy
+.mypy_cache/
+.dmypy.json
+dmypy.json
+
+# Pyre type checker
+.pyre/
+
+# pytype
+.pytype/
+
+# IDEs
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.project
+.classpath
+.settings/
+*.sublime-workspace
+*.sublime-project
+
+# Jupyter Notebook
+.ipynb_checkpoints/
+*.ipynb
+
+# Environment files
+.env
+.venv
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
+.envrc
+.python-version
+
+# Virtual environment (ours)
+ai-env/
+aleam_env/
+aleam-venv/
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+Desktop.ini
+*.bak
+*.tmp
+
+# Logs
+*.log
+logs/
+
+# Benchmark results
+benchmark.json
+.benchmarks/
+
+# Documentation
+docs/_build/
+site/
+
+# Local configuration
+*.local
+config.local.py
+
+# Profiling data
+*.prof
+*.lprof
+
+# Cython debug symbols
+*.cython-*.c
+
+# macOS
+.AppleDouble
+.LSOverride
+
+# Windows
+$RECYCLE.BIN/
+
+# Linux
+.directory
+
+# Project specific
+*.egg-info/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+coverage.xml
+htmlcov/
+
+# Backup files
+*.backup
+*.old
+*.orig
+
+# Temporary files
+*.tmp
+*.temp
+*.swp
+*.swo
+*~
+
+# Data directories (if you add them)
+data/
+outputs/
+*.wav
+*.mp3
+*.pt
+*.pth
+
+# Model files (if any)
+*.bin
+*.gguf
+*.safetensors
+
+# Build artifacts
+aleam.egg-info/
+dist/
+build/
+
+# Notebook checkpoints
+.ipynb_checkpoints/
+
+# PyTorch
+*.pth
+*.pt
+
+# TensorFlow
+*.pb
+*.h5
+*.keras
+
+# VS Code
+.vscode/
+*.code-workspace
+
+# PyCharm
+.idea/
+*.iml
+
+# Vim
+*.swp
+*.swo
+*~
+*.un~
+
+# Emacs
+*~
+\#*\#
+.\#*
+
+# Sublime Text
+*.sublime-workspace
+*.sublime-project
+
+# Visual Studio
+.vs/
+*.vcxproj
+*.vcxproj.filters
+*.vcxproj.user
+
+# Xcode
+*.xcodeproj
+*.xcworkspace
+*.xcuserstate
+
+# Android Studio
+.idea/
+.gradle/
+*.iml
+
+# C extensions
+*.c
+*.cpp
+*.h
+*.o
+*.so
+*.dll
+*.dylib
+*.pyd
+
+# Coverage reports
+.coverage
+.coverage.*
+htmlcov/
+.xml
+.*.coverage
+
+# pytest
+.pytest_cache/
+.tox/
+
+# mypy
+.mypy_cache/
+
+# pytype
+.pytype/
+
+# Profiling
+.prof
+*.lprof
+
+# Sphinx
+docs/_build/
+
+# MkDocs
+site/
+
+# Jupyter
+.ipynb_checkpoints/
+*.ipynb
+
+# Logs
+*.log
+
+# Secret keys
+*.key
+*.pem
+*.crt
+
+# Local settings
+.env
+.env.local
+.env.*.local
+
+# PyPI package index
+.pypirc
+.pypi
+
+# GitHub
+.github/
+!.github/workflows/
+
+# Codecov
+codecov.yml
+
+# Pre-commit
+.pre-commit-config.yaml
+.pre-commit-hooks.yaml
+
+# Docker
+Dockerfile
+.dockerignore
+docker-compose.yml
+
+# Kubernetes
+*.yaml
+*.yml
+!pyproject.toml
+!setup.cfg
+
+# Terraform
+*.tfstate
+*.tfstate.*
+.terraform/
+
+# Node (if any)
+node_modules/
+package-lock.json
+yarn.lock
+
+# Bower
+bower_components/
+
+# Web assets
+*.css
+*.js
+*.map
+
+# Database
+*.db
+*.sqlite
+*.sqlite3
+
+# Archive files
+*.zip
+*.tar
+*.tar.gz
+*.tgz
+*.rar
+*.7z
+
+# Media
+*.mp4
+*.avi
+*.mov
+*.mkv
+
+# Audio
+*.wav
+*.mp3
+*.flac
+*.aac
+*.ogg
+
+# Images
+*.jpg
+*.jpeg
+*.png
+*.gif
+*.bmp
+*.svg
+*.ico
+*.webp
+
+# Fonts
+*.ttf
+*.otf
+*.woff
+*.woff2
+
+# PDF
+*.pdf
+
+# Office documents
+*.doc
+*.docx
+*.xls
+*.xlsx
+*.ppt
+*.pptx
+
+# Random data
+*.rand
+*.random
+
+# Performance data
+*.perf
+*.bench
+
+# Cache directories
+.cache/
+cache/
+*.cache
+
+# Debug symbols
+*.debug
+*.dbg
+
+# Core dumps
+core.*
+*.core
+
+# Swap files
+.swap
+*.swap
+
+# Lock files
+*.lock
+!requirements.lock
+!poetry.lock
+
+# Package manager files
+poetry.lock
+Pipfile.lock
+Pipfile
+
+# Conda
+environment.yml
+environment.yaml
+
+# MyST
+*.myst
+
+# Pandoc
+*.pandoc
+
+# LaTeX
+*.aux
+*.log
+*.out
+*.toc
+*.lof
+*.lot
+*.fls
+*.fdb_latexmk
+
+# R
+.Rproj.user
+.Rhistory
+.RData
+.Ruserdata
+
+# MATLAB
+*.mat
+*.fig
+*.mex*
+*.p
+
+# Julia
+*.jl.cov
+*.jl.*.cov
+*.jl.mem
+Manifest.toml
+
+# Rust
+target/
+Cargo.lock
+
+# Go
+*.exe
+*.test
+*.out
+vendor/
+
+# Ruby
+*.gem
+*.rbc
+.bundle
+
+# PHP
+composer.lock
+vendor/
+
+# Java
+*.class
+*.jar
+*.war
+*.ear
+target/
+
+# Scala
+*.class
+*.log
+target/
+
+# Kotlin
+*.class
+build/
+
+# Swift
+*.xcodeproj
+*.xcworkspace
+build/
+
+# Dart
+.packages
+.pub/
+build/
+
+# Flutter
+*.lock
+*.pid
+*.log

@@ -1,0 +1,45 @@
+numpy>=2.4.4
+
+# Optional framework dependencies (user installs as needed)
+
+# PyTorch (CUDA version)
+# torch>=2.11.0
+
+# PyTorch (CPU version)
+# torch>=2.11.0 --index-url https://download.pytorch.org/whl/cpu
+
+# TensorFlow (GPU version)
+# tensorflow>=2.21.0
+
+# TensorFlow (CPU version)
+# tensorflow-cpu>=2.21.0
+
+# JAX (GPU version)
+# jax>=0.9.2 jaxlib>=0.9.2+cuda12 -f https://storage.googleapis.com/jax-releases/jax_cuda_releases.html
+
+# JAX (CPU version)
+# jax>=0.9.2 jaxlib>=0.9.2
+
+# CuPy (CUDA 12.x)
+# cupy-cuda12x>=14.0.1
+
+# CuPy (CUDA 11.x)
+# cupy-cuda11x>=13.6.0
+
+# Dask
+# dask>=2026.3.0
+
+# Pandas
+# pandas>=3.0.2
+
+# Polars
+# polars>=1.39.3
+
+# Xarray
+# xarray>=2026.2.0
+
+# PyMC
+# pymc>=5.28.3
+
+# Numba (for custom CUDA kernels)
+# numba>=0.64.0
