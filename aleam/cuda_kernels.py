@@ -109,20 +109,47 @@ def get_normal_kernel():
         return None
 
 
-# Pre-compiled kernels (will be compiled on first use)
+def get_torch_uniform_kernel():
+    """Get compiled CUDA kernel for PyTorch uniform distribution"""
+    try:
+        import cupy as cp
+        return cp.RawKernel(PYTORCH_UNIFORM_KERNEL_CU, 'torch_uniform_kernel')
+    except ImportError:
+        return None
+
+
+# Pre-compiled kernel objects (not functions!)
 _uniform_kernel = None
 _normal_kernel = None
+_torch_uniform_kernel = None
 
 
-def uniform_kernel():
+def get_uniform_kernel_obj():
+    """Get the compiled uniform kernel object"""
     global _uniform_kernel
     if _uniform_kernel is None:
         _uniform_kernel = get_uniform_kernel()
     return _uniform_kernel
 
 
-def normal_kernel():
+def get_normal_kernel_obj():
+    """Get the compiled normal kernel object"""
     global _normal_kernel
     if _normal_kernel is None:
         _normal_kernel = get_normal_kernel()
     return _normal_kernel
+
+
+def get_torch_uniform_kernel_obj():
+    """Get the compiled PyTorch uniform kernel object"""
+    global _torch_uniform_kernel
+    if _torch_uniform_kernel is None:
+        _torch_uniform_kernel = get_torch_uniform_kernel()
+    return _torch_uniform_kernel
+
+
+# Export the kernel objects directly (NOT functions)
+# These can be called like: kernel(grid, block, args)
+uniform_kernel = get_uniform_kernel_obj()
+normal_kernel = get_normal_kernel_obj()
+torch_uniform_kernel = get_torch_uniform_kernel_obj()

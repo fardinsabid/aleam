@@ -107,14 +107,32 @@ class CUDAGenerator:
         
         import cupy as cp
         
-        # Generate seeds per block for true randomness
-        total_blocks = np.prod(shape) // 256 + 1
-        seeds = self._get_true_seeds(total_blocks)
+        total_elements = np.prod(shape)
+        threads_per_block = 256
+        blocks_per_grid = (total_elements + threads_per_block - 1) // threads_per_block
+        
+        # Generate true random seeds for each block
+        seeds = self._get_true_seeds(blocks_per_grid)
+        d_seeds = cp.asarray(seeds, dtype=np.uint64)
+        
+        # Convert shape to int32 array
+        shape_array = np.array(shape, dtype=np.int32)
+        d_shape = cp.asarray(shape_array)
         
         # Launch CUDA kernel with true seeds
         from .cuda_kernels import uniform_kernel
         result = cp.empty(shape, dtype=dtype)
-        uniform_kernel[total_blocks, 256](result, seeds, shape)
+        
+        if uniform_kernel is not None:
+            uniform_kernel(
+                grid=(blocks_per_grid,),
+                block=(threads_per_block,),
+                args=(result, d_seeds, d_shape, np.int32(total_elements))
+            )
+        else:
+            # Fallback to CPU generation if kernel not available
+            cpu_data = np.array([self.cpu_rng.random() for _ in range(total_elements)])
+            result = cp.asarray(cpu_data).reshape(shape).astype(dtype)
         
         return result
     
@@ -126,12 +144,32 @@ class CUDAGenerator:
         
         import cupy as cp
         
-        total_blocks = np.prod(shape) // 256 + 1
-        seeds = self._get_true_seeds(total_blocks)
+        total_elements = np.prod(shape)
+        threads_per_block = 256
+        blocks_per_grid = (total_elements + threads_per_block - 1) // threads_per_block
         
+        # Generate true random seeds for each block
+        seeds = self._get_true_seeds(blocks_per_grid)
+        d_seeds = cp.asarray(seeds, dtype=np.uint64)
+        
+        # Convert shape to int32 array
+        shape_array = np.array(shape, dtype=np.int32)
+        d_shape = cp.asarray(shape_array)
+        
+        # Launch CUDA kernel with true seeds
         from .cuda_kernels import normal_kernel
         result = cp.empty(shape, dtype=dtype)
-        normal_kernel[total_blocks, 256](result, mu, sigma, seeds, shape)
+        
+        if normal_kernel is not None:
+            normal_kernel(
+                grid=(blocks_per_grid,),
+                block=(threads_per_block,),
+                args=(result, np.float32(mu), np.float32(sigma), d_seeds, d_shape, np.int32(total_elements))
+            )
+        else:
+            # Fallback to CPU generation if kernel not available
+            cpu_data = np.array([self.cpu_rng.gauss(mu, sigma) for _ in range(total_elements)])
+            result = cp.asarray(cpu_data).reshape(shape).astype(dtype)
         
         return result
     
@@ -149,22 +187,36 @@ class CUDAGenerator:
         for dim in size:
             total_elements *= dim
         
-        # Generate true seeds for blocks
-        seeds = self._get_true_seeds(total_elements // 256 + 1)
-        
-        # Create tensor and fill with true randomness
-        result = torch.empty(*size, device=device, dtype=getattr(torch, dtype))
-        
-        # Use custom CUDA kernel or fallback to CPU generation for small tensors
-        if total_elements > 10000:
-            from .cuda_kernels import pytorch_uniform_kernel
-            pytorch_uniform_kernel(result, seeds)
-        else:
-            # For small tensors, generate on CPU and transfer
+        # For small tensors, use CPU generation
+        if total_elements <= 10000:
             cpu_values = [self.cpu_rng.random() for _ in range(total_elements)]
-            result = torch.tensor(cpu_values, device=device).reshape(*size)
+            result = torch.tensor(cpu_values, device=device, dtype=getattr(torch, dtype))
+            return result.reshape(*size)
         
-        return result
+        # For larger tensors, try GPU kernel
+        threads_per_block = 256
+        blocks_per_grid = (total_elements + threads_per_block - 1) // threads_per_block
+        seeds = self._get_true_seeds(blocks_per_grid)
+        
+        # Try to use PyTorch CUDA kernel (if available)
+        try:
+            from .cuda_kernels import torch_uniform_kernel
+            result = torch.empty(*size, device=device, dtype=getattr(torch, dtype))
+            
+            # Convert seeds to CUDA tensor
+            seeds_tensor = torch.tensor(seeds, device=device, dtype=torch.int64)
+            
+            # Launch kernel (simplified — would need proper PyTorch CUDA extension)
+            # For now, fallback to CPU generation
+            cpu_values = [self.cpu_rng.random() for _ in range(total_elements)]
+            result = torch.tensor(cpu_values, device=device, dtype=getattr(torch, dtype))
+            
+        except (ImportError, AttributeError):
+            # Fallback to CPU generation
+            cpu_values = [self.cpu_rng.random() for _ in range(total_elements)]
+            result = torch.tensor(cpu_values, device=device, dtype=getattr(torch, dtype))
+        
+        return result.reshape(*size)
     
     def torch_randn(self, *size, mu=0.0, sigma=1.0, device='cuda', dtype='float32') -> Any:
         """Generate true random normal tensor with PyTorch CUDA"""
@@ -177,17 +229,10 @@ class CUDAGenerator:
         for dim in size:
             total_elements *= dim
         
-        result = torch.empty(*size, device=device, dtype=getattr(torch, dtype))
-        
-        if total_elements > 10000:
-            from .cuda_kernels import pytorch_normal_kernel
-            seeds = self._get_true_seeds(total_elements // 256 + 1)
-            pytorch_normal_kernel(result, mu, sigma, seeds)
-        else:
-            cpu_values = [self.cpu_rng.gauss(mu, sigma) for _ in range(total_elements)]
-            result = torch.tensor(cpu_values, device=device).reshape(*size)
-        
-        return result
+        # For now, use CPU generation for all sizes (GPU kernel needs PyTorch CUDA extension)
+        cpu_values = [self.cpu_rng.gauss(mu, sigma) for _ in range(total_elements)]
+        result = torch.tensor(cpu_values, device=device, dtype=getattr(torch, dtype))
+        return result.reshape(*size)
     
     # ==================== TensorFlow GPU Integration ====================
     
@@ -199,17 +244,8 @@ class CUDAGenerator:
         import tensorflow as tf
         
         total_elements = np.prod(shape)
-        
-        if total_elements > 10000:
-            # Use tf.py_function to call CUDA kernel
-            def _true_random_uniform(size):
-                seeds = self._get_true_seeds(size // 256 + 1)
-                # Call CUDA kernel (simplified)
-                return tf.random.uniform(shape, minval, maxval, dtype)  # Fallback
-            return tf.py_function(_true_random_uniform, [total_elements], dtype)
-        else:
-            cpu_values = [self.cpu_rng.uniform(minval, maxval) for _ in range(total_elements)]
-            return tf.constant(cpu_values, dtype=dtype, shape=shape)
+        cpu_values = [self.cpu_rng.uniform(minval, maxval) for _ in range(total_elements)]
+        return tf.constant(cpu_values, dtype=dtype, shape=shape)
     
     def tf_random_normal(self, shape, mean=0.0, stddev=1.0, dtype='float32') -> Any:
         """Generate true random normal tensor with TensorFlow GPU"""
@@ -219,15 +255,8 @@ class CUDAGenerator:
         import tensorflow as tf
         
         total_elements = np.prod(shape)
-        
-        if total_elements > 10000:
-            cpu_values = [self.cpu_rng.gauss(mean, stddev) for _ in range(total_elements)]
-            return tf.constant(cpu_values, dtype=dtype, shape=shape)
-        else:
-            return tf.py_function(
-                lambda: [self.cpu_rng.gauss(mean, stddev) for _ in range(total_elements)],
-                [], dtype
-            )
+        cpu_values = [self.cpu_rng.gauss(mean, stddev) for _ in range(total_elements)]
+        return tf.constant(cpu_values, dtype=dtype, shape=shape)
     
     # ==================== JAX GPU Integration ====================
     
@@ -239,7 +268,6 @@ class CUDAGenerator:
         import jax
         import jax.numpy as jnp
         
-        # JAX uses PRNG keys, but we can seed with true randomness
         seed = self._get_true_seed()
         key = jax.random.key(seed)
         return jax.random.uniform(key, shape, dtype, minval, maxval)
@@ -273,8 +301,10 @@ class CUDAGenerator:
         d_arr = cuda.device_array(shape, dtype=np.dtype(dtype))
         
         # Generate seeds per block
-        total_blocks = np.prod(shape) // 256 + 1
-        seeds = self._get_true_seeds(total_blocks)
+        total_elements = np.prod(shape)
+        threads_per_block = 256
+        blocks_per_grid = (total_elements + threads_per_block - 1) // threads_per_block
+        seeds = self._get_true_seeds(blocks_per_grid)
         d_seeds = cuda.to_device(np.array(seeds, dtype=np.uint32))
         
         # Launch kernel
@@ -283,20 +313,14 @@ class CUDAGenerator:
             idx = cuda.grid(1)
             if idx < total:
                 block_idx = idx // 256
-                # Use true seed for this block
                 seed = seeds[block_idx]
-                # Simple but effective mixing
                 x = (seed ^ idx) * 0x9E3779B97F4A7C15
                 x = (x ^ (x >> 30)) * 0xBF58476D1CE4E5B9
                 x = (x ^ (x >> 27)) * 0x94D049BB133111EB
                 x = x ^ (x >> 31)
                 arr[idx] = (x & 0xFFFFFFFFFFFFFFFF) / (2**64)
         
-        total = np.prod(shape)
-        threads_per_block = 256
-        blocks_per_grid = (total + threads_per_block - 1) // threads_per_block
-        
-        uniform_kernel[blocks_per_grid, threads_per_block](d_arr, d_seeds, total)
+        uniform_kernel[blocks_per_grid, threads_per_block](d_arr, d_seeds, total_elements)
         cuda.synchronize()
         
         return d_arr

@@ -20,10 +20,15 @@ def main():
     # Check CuPy
     try:
         import cupy as cp
-        print(f"  ✓ CuPy: {cp.__version__} (device: {cp.cuda.Device().name})")
+        device = cp.cuda.Device()
+        device_name = cp.cuda.runtime.getDeviceProperties(device.id)['name'].decode()
+        print(f"  ✓ CuPy: {cp.__version__} (device: {device_name})")
         cupy_available = True
     except ImportError:
         print(f"  ✗ CuPy: not installed")
+        cupy_available = False
+    except Exception as e:
+        print(f"  ⚠️ CuPy: {e}")
         cupy_available = False
     
     # Check PyTorch CUDA
