@@ -31,7 +31,7 @@ def get_version():
             if line.startswith("__version__"):
                 exec(line, version)
                 break
-    return version.get("__version__", "1.0.1")
+    return version.get("__version__", "1.0.2")
 
 # Custom test command
 class PyTest(TestCommand):
