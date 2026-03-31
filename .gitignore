@@ -286,8 +286,7 @@ site/
 .pypirc
 .pypi
 
-# GitHub
-.github/
+# GitHub workflows (keep these, ignore others)
 !.github/workflows/
 
 # Codecov
