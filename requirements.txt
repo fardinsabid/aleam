@@ -1,4 +1,4 @@
-numpy>=2.4.4
+numpy>=1.24.0,<2.0.0
 
 # Optional framework dependencies (user installs as needed)
 
