@@ -28,7 +28,7 @@ jobs:
 
     - name: Run benchmarks
       run: |
-        python -c "
+        python -c '
 import time
 import aleam as al
 rng = al.Aleam()
@@ -37,10 +37,10 @@ start = time.time()
 for _ in range(iterations):
     rng.random()
 elapsed = time.time() - start
-print(f'Random: {iterations/elapsed:,.0f} ops/sec')
+print(f"Random: {iterations/elapsed:,.0f} ops/sec")
 start = time.time()
 for _ in range(iterations):
     rng.gauss(0, 1)
 elapsed = time.time() - start
-print(f'Gauss: {iterations/elapsed:,.0f} ops/sec')
-"
+print(f"Gauss: {iterations/elapsed:,.0f} ops/sec")
+'
