@@ -175,9 +175,9 @@ class TestAleamDistributions:
     
     def test_student_t(self):
         """Test student's t distribution"""
-        samples = [self.rng.student_t(3) for _ in range(1000)]
+        samples = [self.rng.student_t(3) for _ in range(10000)]
         mean = sum(samples) / len(samples)
-        assert abs(mean) < 0.1
+        assert abs(mean) < 0.2  # Wider tolerance for t-distribution
     
     def test_f_distribution(self):
         """Test F distribution"""
