@@ -31,16 +31,13 @@ jobs:
         python -c "
 import time
 import aleam as al
-
 rng = al.Aleam()
 iterations = 100000
-
 start = time.time()
 for _ in range(iterations):
     rng.random()
 elapsed = time.time() - start
 print(f'Random: {iterations/elapsed:,.0f} ops/sec')
-
 start = time.time()
 for _ in range(iterations):
     rng.gauss(0, 1)
