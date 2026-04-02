@@ -23,7 +23,7 @@ jobs:
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
-        pip install numpy
+        pip install numpy pytest
 
     - name: Install package
       run: |
@@ -33,5 +33,31 @@ jobs:
       run: |
         python -c "import aleam; print('Aleam imported successfully')"
 
-    - name: Run benchmarks
-      run: python benchmarks/benchmark_core.py
+    - name: Run CPU benchmarks only
+      run: |
+        python -c "
+import time
+import random
+import aleam as al
+
+print('=' * 60)
+print('ALEAM - CPU BENCHMARK (GitHub Actions)')
+print('=' * 60)
+
+# Python random
+start = time.time()
+for _ in range(10_000_000):
+    random.random()
+py_speed = 10_000_000 / (time.time() - start) / 1_000_000
+
+# Aleam CPU
+rng = al.Aleam()
+start = time.time()
+for _ in range(1_000_000):
+    rng.random()
+cpu_speed = 1_000_000 / (time.time() - start) / 1_000_000
+
+print(f'\n  Python random: {py_speed:.2f}M ops/sec')
+print(f'  Aleam CPU:     {cpu_speed:.2f}M ops/sec')
+print('\n✅ CPU benchmarks complete (GPU not available in CI)')
+"
