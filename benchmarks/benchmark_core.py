@@ -1,293 +1,331 @@
 """
-ALEAM - UNIVERSAL BENCHMARK (CPU + GPU Auto-Detect)
-Tests performance on whatever hardware is available
+ALEAM - ADVANCED UNIVERSAL BENCHMARK
+Includes: CPU, GPU, PyTorch CUDA, and Real Lava Lamp API
 """
 
 import time
-import sys
-import os
-import math
-
-# Add parent directory to path
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
-
-from aleam import Aleam, AleamFast
 import random
+import aleam as al
+import numpy as np
+import requests
 
-# Try to import GPU frameworks
-try:
-    import torch
-    TORCH_AVAILABLE = True
-except ImportError:
-    TORCH_AVAILABLE = False
+print("=" * 80)
+print("ALEAM - ADVANCED UNIVERSAL BENCHMARK")
+print("Complete testing: Speed | Uniqueness | Quality | GPU/CPU | Lava Lamp")
+print("=" * 80)
 
+# ============================================================
+# HARDWARE DETECTION
+# ============================================================
+print("\n🔍 HARDWARE DETECTION")
+print("-" * 60)
+
+GPU_AVAILABLE = False
 try:
     import cupy as cp
-    CUPY_AVAILABLE = True
-except ImportError:
-    CUPY_AVAILABLE = False
+    device = cp.cuda.Device()
+    device_name = cp.cuda.runtime.getDeviceProperties(device.id)['name'].decode()
+    print(f"  ✅ CuPy GPU: {device_name}")
+    GPU_AVAILABLE = True
+except:
+    print(f"  ❌ CuPy GPU: not available")
 
 try:
-    import jax
-    JAX_AVAILABLE = True
-except ImportError:
-    JAX_AVAILABLE = False
-
-
-def check_gpu():
-    """Detect available GPU backends"""
-    print("\n" + "=" * 70)
-    print("🔍 HARDWARE DETECTION")
-    print("=" * 70)
-    
-    gpu_found = False
-    
-    # Check PyTorch CUDA
-    if TORCH_AVAILABLE:
-        if torch.cuda.is_available():
-            print(f"  ✅ PyTorch CUDA: {torch.cuda.get_device_name(0)}")
-            print(f"     CUDA version: {torch.version.cuda}")
-            gpu_found = True
-        else:
-            print(f"  ⚠️ PyTorch: Installed but no CUDA detected")
-    
-    # Check CuPy
-    if CUPY_AVAILABLE:
-        try:
-            print(f"  ✅ CuPy: {cp.__version__} (Device: {cp.cuda.Device().name})")
-            gpu_found = True
-        except:
-            print(f"  ⚠️ CuPy: Installed but no CUDA detected")
-    
-    # Check JAX
-    if JAX_AVAILABLE:
-        try:
-            devices = jax.devices()
-            if any('gpu' in str(d).lower() for d in devices):
-                print(f"  ✅ JAX GPU: {devices[0]}")
-                gpu_found = True
-            else:
-                print(f"  ⚠️ JAX: No GPU detected")
-        except:
-            print(f"  ⚠️ JAX: Error detecting devices")
-    
-    if not gpu_found:
-        print(f"  ❌ No GPU detected. Using CPU only.")
-    
-    return gpu_found
-
-
-def benchmark_cpu():
-    """Benchmark CPU performance"""
-    print("\n" + "=" * 70)
-    print("🖥️ CPU BENCHMARKS")
-    print("=" * 70)
-    
-    rng_opt = Aleam()
-    rng_fast = AleamFast()
-    iterations = 200000
-    
-    print("\n📊 Random Float Generation (200,000 iterations):")
-    
-    start = time.time()
-    for _ in range(iterations):
-        rng_opt.random()
-    opt_time = time.time() - start
-    print(f"  Aleam (Optimized): {iterations/opt_time:,.0f} ops/sec ({opt_time*1000:.2f} ms)")
-    
-    start = time.time()
-    for _ in range(iterations):
-        rng_fast.random()
-    fast_time = time.time() - start
-    print(f"  AleamFast:         {iterations/fast_time:,.0f} ops/sec ({fast_time*1000:.2f} ms)")
-    
-    start = time.time()
-    for _ in range(iterations):
-        random.random()
-    py_time = time.time() - start
-    print(f"  Python random:        {iterations/py_time:,.0f} ops/sec ({py_time*1000:.2f} ms)")
-
-
-def benchmark_gpu():
-    """Benchmark GPU performance if available"""
-    print("\n" + "=" * 70)
-    print("🎮 GPU BENCHMARKS")
-    print("=" * 70)
-    
-    gpu_tested = False
-    
-    # PyTorch CUDA Benchmark
-    if TORCH_AVAILABLE and torch.cuda.is_available():
-        try:
-            import aleam as al
-            print("\n📊 PyTorch CUDA:")
-            
-            gen = al.TorchGenerator(device='cuda')
-            sizes = [(1000, 1000), (5000, 5000), (10000, 10000)]
-            
-            for size in sizes:
-                total = size[0] * size[1]
-                
-                # Warmup
-                for _ in range(5):
-                    _ = gen.rand(*size)
-                torch.cuda.synchronize()
-                
-                # Benchmark
-                start = time.time()
-                for _ in range(10):
-                    t = gen.rand(*size)
-                torch.cuda.synchronize()
-                elapsed = time.time() - start
-                
-                ops_per_sec = 10 / elapsed
-                elements_per_sec = total * ops_per_sec
-                print(f"    rand{size}: {ops_per_sec:.1f} tensors/sec ({elements_per_sec:,.0f} elements/sec)")
-            
-            gpu_tested = True
-            
-        except Exception as e:
-            print(f"  PyTorch GPU benchmark failed: {e}")
-    
-    # CuPy Benchmark
-    if CUPY_AVAILABLE:
-        try:
-            import aleam as al
-            print("\n📊 CuPy CUDA:")
-            
-            gen = al.CuPyGenerator()
-            sizes = [(1000, 1000), (5000, 5000)]
-            
-            for size in sizes:
-                total = size[0] * size[1]
-                
-                # Warmup
-                for _ in range(5):
-                    _ = gen.random(size)
-                cp.cuda.Stream.null.synchronize()
-                
-                # Benchmark
-                start = time.time()
-                for _ in range(10):
-                    arr = gen.random(size)
-                cp.cuda.Stream.null.synchronize()
-                elapsed = time.time() - start
-                
-                ops_per_sec = 10 / elapsed
-                elements_per_sec = total * ops_per_sec
-                print(f"    random{size}: {ops_per_sec:.1f} arrays/sec ({elements_per_sec:,.0f} elements/sec)")
-            
-            gpu_tested = True
-            
-        except Exception as e:
-            print(f"  CuPy GPU benchmark failed: {e}")
-    
-    # JAX GPU Benchmark
-    if JAX_AVAILABLE:
-        try:
-            import aleam as al
-            import jax.numpy as jnp
-            print("\n📊 JAX GPU:")
-            
-            gen = al.JAXGenerator()
-            sizes = [(1000, 1000), (5000, 5000)]
-            
-            for size in sizes:
-                total = size[0] * size[1]
-                
-                # Warmup
-                for _ in range(5):
-                    key = gen.key()
-                    _ = jax.random.uniform(key, size)
-                
-                # Benchmark
-                start = time.time()
-                for _ in range(10):
-                    key = gen.key()
-                    arr = jax.random.uniform(key, size)
-                    arr.block_until_ready()
-                elapsed = time.time() - start
-                
-                ops_per_sec = 10 / elapsed
-                elements_per_sec = total * ops_per_sec
-                print(f"    uniform{size}: {ops_per_sec:.1f} arrays/sec ({elements_per_sec:,.0f} elements/sec)")
-            
-            gpu_tested = True
-            
-        except Exception as e:
-            print(f"  JAX GPU benchmark failed: {e}")
-    
-    if not gpu_tested:
-        print("\n  ❌ No GPU benchmarks ran. GPU not available or frameworks not installed.")
-
-
-def benchmark_distributions():
-    """Benchmark CPU distributions"""
-    print("\n" + "=" * 70)
-    print("📊 DISTRIBUTION BENCHMARKS (CPU)")
-    print("=" * 70)
-    
-    rng = Aleam()
-    iterations = 100000
-    
-    distributions = [
-        ("random()", lambda: rng.random()),
-        ("gauss(0,1)", lambda: rng.gauss(0, 1)),
-        ("exponential(1.0)", lambda: rng.exponential(1.0)),
-        ("uniform(-1,1)", lambda: rng.uniform(-1, 1)),
-        ("laplace(0,1)", lambda: rng.laplace(0, 1)),
-        ("gamma(2,1)", lambda: rng.gamma(2, 1)),
-        ("beta(2,5)", lambda: rng.beta(2, 5)),
-        ("poisson(5)", lambda: rng.poisson(5)),
-    ]
-    
-    for name, func in distributions:
-        start = time.time()
-        for _ in range(iterations):
-            func()
-        elapsed = time.time() - start
-        ops_per_sec = iterations / elapsed
-        print(f"  {name:<20}: {ops_per_sec:>10,.0f} ops/sec")
-
-
-def main():
-    """Run universal benchmarks"""
-    print("\n" + "=" * 70)
-    print("🚀 ALEAM - UNIVERSAL BENCHMARK")
-    print("=" * 70)
-    
-    # Detect hardware
-    has_gpu = check_gpu()
-    
-    # CPU benchmarks (always run)
-    benchmark_cpu()
-    benchmark_distributions()
-    
-    # GPU benchmarks (only if available)
-    if has_gpu:
-        benchmark_gpu()
-    
-    # Summary
-    print("\n" + "=" * 70)
-    print("📊 BENCHMARK SUMMARY")
-    print("=" * 70)
-    
-    print("\n  ✅ CPU Performance: ~270,000 ops/sec")
-    
-    if has_gpu:
-        print("\n  ✅ GPU Performance: Up to 100,000,000 ops/sec")
-        print("     (370x faster than CPU!)")
-        print("\n  💡 For maximum performance, use:")
-        print("     • cuda_gen.torch_randn() for PyTorch")
-        print("     • cuda_gen.cupy_random() for CuPy")
-        print("     • cuda_gen.jax_randn() for JAX")
+    import torch
+    if torch.cuda.is_available():
+        print(f"  ✅ PyTorch CUDA: {torch.cuda.get_device_name(0)}")
+        PYTORCH_AVAILABLE = True
     else:
-        print("\n  ⚠️ No GPU detected. Install PyTorch/TensorFlow/JAX with CUDA for GPU acceleration.")
+        print(f"  ❌ PyTorch CUDA: not available")
+        PYTORCH_AVAILABLE = False
+except:
+    print(f"  ❌ PyTorch: not installed")
+    PYTORCH_AVAILABLE = False
+
+# ============================================================
+# LAVA LAMP API FUNCTION
+# ============================================================
+def get_lavarand():
+    """Get true random number from Cloudflare's LavaRand API"""
+    url = "https://drand.cloudflare.com/52db9ba70e0cc0f6eaf7803dd07447a1f5477735fd3f661792ba94600c84e971/public/latest"
+    try:
+        resp = requests.get(url, timeout=10)
+        if resp.status_code == 200:
+            data = resp.json()
+            randomness_hex = data.get('randomness', '')
+            if randomness_hex:
+                return int(randomness_hex[:8], 16) / (2**32)
+    except:
+        pass
+    return None
+
+# ============================================================
+# GENERATORS SETUP
+# ============================================================
+print("\n📦 GENERATORS")
+print("-" * 60)
+
+generators = []
+
+# Python random
+generators.append({
+    'name': 'Python random',
+    'type': 'PSEUDO',
+    'desc': 'Mersenne Twister'
+})
+
+# Aleam CPU
+rng_cpu = al.Aleam()
+generators.append({
+    'name': 'Aleam CPU',
+    'type': 'TRUE',
+    'desc': 'System entropy + Golden ratio'
+})
+
+# Aleam GPU
+if GPU_AVAILABLE:
+    cuda = al.CUDAGenerator()
+    generators.append({
+        'name': 'Aleam GPU',
+        'type': 'TRUE',
+        'desc': 'GPU accelerated + System entropy'
+    })
+
+# PyTorch CUDA
+if PYTORCH_AVAILABLE:
+    generators.append({
+        'name': 'PyTorch CUDA',
+        'type': 'PSEUDO',
+        'desc': 'Philox on GPU'
+    })
+
+# Lava Lamp API
+generators.append({
+    'name': 'Lava Lamp API',
+    'type': 'TRUE',
+    'desc': 'Cloudflare LavaRand (physical entropy)'
+})
+
+for g in generators:
+    print(f"  {g['name']:<15} → {g['type']:<6} ({g['desc']})")
+
+# ============================================================
+# TEST 1: SPEED BENCHMARK
+# ============================================================
+print("\n" + "=" * 80)
+print("⚡ TEST 1: SPEED BENCHMARK")
+print("=" * 80)
+
+speed_results = []
+
+# Python random
+print("\n  Testing Python random...")
+count = 10_000_000
+start = time.time()
+for _ in range(count):
+    random.random()
+elapsed = time.time() - start
+speed = count / elapsed / 1_000_000
+speed_results.append({'name': 'Python random', 'speed': speed})
+print(f"    {count:,} numbers in {elapsed:.2f}s → {speed:.2f}M ops/sec")
+
+# Aleam CPU
+print("\n  Testing Aleam CPU...")
+count = 1_000_000
+start = time.time()
+for _ in range(count):
+    rng_cpu.random()
+elapsed = time.time() - start
+speed = count / elapsed / 1_000_000
+speed_results.append({'name': 'Aleam CPU', 'speed': speed})
+print(f"    {count:,} numbers in {elapsed:.2f}s → {speed:.2f}M ops/sec")
+
+# Aleam GPU
+if GPU_AVAILABLE:
+    print("\n  Testing Aleam GPU...")
+    count = 100_000_000
+    start = time.time()
+    arr = cuda.cupy_random(count, dtype='float32')
+    cp.cuda.Stream.null.synchronize()
+    elapsed = time.time() - start
+    speed = count / elapsed / 1_000_000
+    speed_results.append({'name': 'Aleam GPU', 'speed': speed})
+    print(f"    {count:,} numbers in {elapsed:.2f}s → {speed:.2f}M ops/sec")
+
+# PyTorch CUDA
+if PYTORCH_AVAILABLE:
+    print("\n  Testing PyTorch CUDA...")
+    count = 100_000_000
+    torch.cuda.synchronize()
+    start = time.time()
+    arr = torch.randn(count, device='cuda')
+    torch.cuda.synchronize()
+    elapsed = time.time() - start
+    speed = count / elapsed / 1_000_000
+    speed_results.append({'name': 'PyTorch CUDA', 'speed': speed})
+    print(f"    {count:,} numbers in {elapsed:.2f}s → {speed:.2f}M ops/sec")
+
+# Lava Lamp API (measure speed)
+print("\n  Testing Lava Lamp API...")
+lava_times = []
+for i in range(10):
+    start = time.time()
+    num = get_lavarand()
+    if num:
+        lava_times.append(time.time() - start)
+    time.sleep(0.5)
+
+if lava_times:
+    avg_lava_time = sum(lava_times) / len(lava_times)
+    lava_speed = 1 / avg_lava_time
+    speed_results.append({'name': 'Lava Lamp API', 'speed': lava_speed})
+    print(f"    10 numbers in {sum(lava_times):.2f}s → {lava_speed:.2f} ops/sec")
+else:
+    lava_speed = 0
+    print(f"    Failed to get Lava Lamp data")
+
+# ============================================================
+# TEST 2: DUPLICATES (50,000 numbers)
+# ============================================================
+print("\n" + "=" * 80)
+print("🔬 TEST 2: DUPLICATES (Proof of randomness)")
+print("=" * 80)
+
+SAMPLE = 50000
+
+# Python random
+print("\n  Analyzing Python random...")
+py_nums = [random.random() for _ in range(SAMPLE)]
+py_unique = len(set(py_nums))
+py_dups = SAMPLE - py_unique
+print(f"    Unique: {py_unique}/{SAMPLE} ({py_unique/SAMPLE*100:.2f}%)")
+print(f"    Duplicates: {py_dups}")
+
+# Aleam CPU
+print("\n  Analyzing Aleam CPU...")
+cpu_nums = [rng_cpu.random() for _ in range(SAMPLE)]
+cpu_unique = len(set(cpu_nums))
+cpu_dups = SAMPLE - cpu_unique
+print(f"    Unique: {cpu_unique}/{SAMPLE} ({cpu_unique/SAMPLE*100:.2f}%)")
+print(f"    Duplicates: {cpu_dups}")
+
+# Aleam GPU
+if GPU_AVAILABLE:
+    print("\n  Analyzing Aleam GPU...")
+    gpu_arr = cuda.cupy_random(SAMPLE, dtype='float32')
+    gpu_nums = cp.asnumpy(gpu_arr)
+    gpu_unique = len(np.unique(gpu_nums))
+    gpu_dups = SAMPLE - gpu_unique
+    print(f"    Unique: {gpu_unique}/{SAMPLE} ({gpu_unique/SAMPLE*100:.2f}%)")
+    print(f"    Duplicates: {gpu_dups}")
+
+# PyTorch CUDA
+if PYTORCH_AVAILABLE:
+    print("\n  Analyzing PyTorch CUDA...")
+    torch_arr = torch.randn(SAMPLE, device='cuda').cpu().numpy()
+    torch_unique = len(np.unique(torch_arr))
+    torch_dups = SAMPLE - torch_unique
+    print(f"    Unique: {torch_unique}/{SAMPLE} ({torch_unique/SAMPLE*100:.2f}%)")
+    print(f"    Duplicates: {torch_dups}")
+
+# Lava Lamp API (get 50 numbers)
+print("\n  Analyzing Lava Lamp API...")
+lava_nums = []
+for i in range(50):
+    num = get_lavarand()
+    if num:
+        lava_nums.append(num)
+    time.sleep(0.3)
+
+if lava_nums:
+    lava_unique = len(set(lava_nums))
+    lava_dups = len(lava_nums) - lava_unique
+    print(f"    Unique: {lava_unique}/{len(lava_nums)} ({lava_unique/len(lava_nums)*100:.2f}%)")
+    print(f"    Duplicates: {lava_dups}")
+
+# ============================================================
+# TEST 3: REPRODUCIBILITY
+# ============================================================
+print("\n" + "=" * 80)
+print("🔄 TEST 3: REPRODUCIBILITY")
+print("=" * 80)
+
+# Python random
+print("\n  Testing Python random...")
+random.seed(42)
+py_first = [random.random() for _ in range(5)]
+random.seed(42)
+py_second = [random.random() for _ in range(5)]
+print(f"    Same seed = same numbers? {py_first == py_second}")
+
+# Aleam CPU
+print("\n  Testing Aleam CPU...")
+cpu_first = [rng_cpu.random() for _ in range(5)]
+cpu_second = [rng_cpu.random() for _ in range(5)]
+print(f"    Reproducible? {cpu_first == cpu_second}")
+
+# Aleam GPU
+if GPU_AVAILABLE:
+    print("\n  Testing Aleam GPU...")
+    gpu_first = [float(cuda.cupy_random(1).get()[0]) for _ in range(5)]
+    gpu_second = [float(cuda.cupy_random(1).get()[0]) for _ in range(5)]
+    print(f"    Reproducible? {gpu_first == gpu_second}")
+
+# PyTorch CUDA
+if PYTORCH_AVAILABLE:
+    print("\n  Testing PyTorch CUDA...")
+    torch.manual_seed(42)
+    torch_first = torch.randn(5, device='cuda').cpu().numpy()
+    torch.manual_seed(42)
+    torch_second = torch.randn(5, device='cuda').cpu().numpy()
+    print(f"    Same seed = same numbers? {np.array_equal(torch_first, torch_second)}")
+
+# Lava Lamp API
+print("\n  Testing Lava Lamp API...")
+lava_first = [get_lavarand() for _ in range(3)]
+time.sleep(1)
+lava_second = [get_lavarand() for _ in range(3)]
+print(f"    Reproducible? {lava_first == lava_second}")
+
+# ============================================================
+# FINAL RESULTS TABLE
+# ============================================================
+print("\n" + "=" * 80)
+print("📊 FINAL RESULTS")
+print("=" * 80)
+
+print(f"\n{'Generator':<20} {'Speed':<15} {'Duplicates':<12} {'Reproducible':<12} {'Type':<10}")
+print(f"{'-'*20} {'-'*15} {'-'*12} {'-'*12} {'-'*10}")
+
+for gen in generators:
+    speed = next((s['speed'] for s in speed_results if s['name'] == gen['name']), 0)
     
-    print("\n" + "=" * 70)
-    print("✅ Benchmarks complete")
-    print("=" * 70)
+    if gen['name'] == 'Python random':
+        dups = py_dups
+        repro = 'YES'
+    elif gen['name'] == 'Aleam CPU':
+        dups = cpu_dups
+        repro = 'NO'
+    elif gen['name'] == 'Aleam GPU' and GPU_AVAILABLE:
+        dups = gpu_dups
+        repro = 'NO'
+    elif gen['name'] == 'PyTorch CUDA' and PYTORCH_AVAILABLE:
+        dups = torch_dups
+        repro = 'YES'
+    elif gen['name'] == 'Lava Lamp API':
+        dups = lava_dups if 'lava_dups' in dir() else 'N/A'
+        repro = 'NO'
+    else:
+        continue
+    
+    # Format speed display
+    if gen['name'] == 'Lava Lamp API':
+        speed_str = f"{speed:.2f} ops/sec"
+    else:
+        speed_str = f"{speed:.2f}M ops/sec"
+    
+    print(f"{gen['name']:<20} {speed_str:<15} {dups:<12} {repro:<12} {gen['type']:<10}")
 
-
-if __name__ == "__main__":
-    main()
+print("\n" + "=" * 80)
+print("✅ BENCHMARK COMPLETE")
+print("=" * 80)
