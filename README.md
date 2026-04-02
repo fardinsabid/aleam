@@ -104,6 +104,63 @@ Aleam implements the proven equation:
 
 ---
 
+## 🔬 How It Works
+
+<div align="center">
+  <img src="https://raw.githubusercontent.com/fardinsabid/aleam/main/assets/images/diagrams/algorithm.png" alt="Aleam Core Algorithm" width="85%"/>
+</div>
+
+<br/>
+
+### The Core Equation in Detail
+
+| Step | Operation | Description |
+|------|-----------|-------------|
+| **1** | `Ξ(t) = os.urandom(16)` | Pull 128-bit true entropy from system |
+| **2** | `Ω = Φ × Ξ(t)` | Golden ratio mixing (bijective, maximally equidistributed) |
+| **3** | `τ = time.time_ns()` | Nanosecond timestamp for uniqueness |
+| **4** | `Σ = Ω ⊕ τ` | XOR mixing over 64 bits |
+| **5** | `ψ = BLAKE2s(Σ)` | Cryptographic hash to 64-bit output |
+| **6** | `r = ψ / 2⁶⁴` | Map to floating point [0, 1) |
+
+---
+
+## ⚡ GPU Performance: Aleam vs Real Lava Lamps
+
+<div align="center">
+  <img src="https://raw.githubusercontent.com/fardinsabid/aleam/main/assets/images/benchmarks/aleam_gpu_vs_lavarand_hd.png" alt="Aleam GPU vs Lava Lamps" width="90%"/>
+</div>
+
+<br/>
+
+| Metric | Aleam GPU | Cloudflare LavaRand |
+|--------|-----------|---------------------|
+| **Speed** | **93.4 MILLION ops/sec** | 11.47 ops/sec |
+| **Time for 1B numbers** | **11.7 seconds** | 1,009 days |
+| **Uniqueness** | **100%** | 13.3% |
+| **Speedup** | **8,140,555x FASTER** | — |
+
+*Tested on NVIDIA Tesla T4 (Google Colab) · CuPy 14.0.1 · Aleam 1.0.2*
+
+> 💡 **Key Insight:** Lava lamps look cool on a wall, but for AI training, Aleam is 8 million times faster and delivers 100% unique random numbers.
+
+---
+
+## 🚀 CPU vs GPU Performance
+
+<div align="center">
+  <img src="https://raw.githubusercontent.com/fardinsabid/aleam/main/assets/images/benchmarks/cpu_vs_gpu.png" alt="Aleam CPU vs GPU" width="90%"/>
+</div>
+
+<br/>
+
+| Metric | CPU | GPU | Speedup |
+|--------|-----|-----|---------|
+| **Speed** | 435K ops/sec | 93.4M ops/sec | **215x** |
+| **Time for 1B numbers** | 38 minutes | 11.7 seconds | **195x** |
+
+---
+
 ## 📊 Statistical Validation
 
 After **2.55 million samples**, Aleam passed all 10 rigorous tests:
@@ -140,28 +197,6 @@ z = rng.choice(['AI', 'ML'])  # 'ML'
 # AI/ML features
 noise = rng.gauss(0, 0.1)               # Gradient noise
 batch = rng.sample(range(10000), 64)    # Mini-batch sampling
-```
-
----
-
-## ⚡ GPU Performance (Real Benchmarks)
-
-**Tested on NVIDIA Tesla T4 (Google Colab)**
-
-| Operation | Device | Speed | Time (100M numbers) |
-|-----------|--------|-------|---------------------|
-| `uniform()` | **GPU (CuPy)** | **100.3M ops/sec** | **0.997s** |
-| `uniform()` | CPU (Python) | 0.46M ops/sec | 217s |
-| `normal()` | **GPU (CuPy)** | **100.1M ops/sec** | **0.999s** |
-| `normal()` | CPU (Python) | 0.13M ops/sec | 769s |
-
-**Speedup: 211x - 770x faster than CPU!**
-
-```python
-# Generate 100 million true random numbers in 1 second on GPU
-import aleam as al
-cuda_gen = al.CUDAGenerator()
-arr = cuda_gen.cupy_randn((10000, 10000))  # 100M numbers in ~1s
 ```
 
 ---
@@ -282,6 +317,19 @@ torch_tensor = cuda_gen.torch_randn(10000, 10000, device='cuda')
 tf_tensor = cuda_gen.tf_random_normal((10000, 10000))
 ```
 
+### Distribution Performance (CPU)
+
+| Distribution | Speed (ops/sec) |
+|--------------|-----------------|
+| `random()` | 270,000 |
+| `uniform()` | 253,000 |
+| `exponential()` | 248,000 |
+| `laplace()` | 236,000 |
+| `gauss()` | 129,000 |
+| `gamma()` | 79,000 |
+| `poisson()` | 46,000 |
+| `beta()` | 41,000 |
+
 ---
 
 ## 📦 Installation
@@ -314,30 +362,6 @@ pip install aleam[all]
 git clone https://github.com/fardinsabid/aleam.git
 cd aleam
 pip install -e .
-```
-
----
-
-## 🔬 How It Works
-
-```
-┌─────────────────────────────────────────────────────────────────┐
-│                    ALEAM GENERATION FLOW                     │
-├─────────────────────────────────────────────────────────────────┤
-│                                                                  │
-│  1.  Ξ(t) ← os.urandom(16)      ▷ 128-bit true entropy          │
-│                                                                  │
-│  2.  Ω ← Φ × Ξ(t)               ▷ Golden ratio mixing           │
-│                                                                  │
-│  3.  τ ← time.time_ns()         ▷ Nanosecond timestamp          │
-│                                                                  │
-│  4.  Σ ← Ω ⊕ τ                  ▷ XOR mixing over 64-bit        │
-│                                                                  │
-│  5.  Ψ ← BLAKE2s(Σ)             ▷ Cryptographic hash            │
-│                                                                  │
-│  6.  r ← Ψ / 2⁶⁴                ▷ Map to [0, 1)                 │
-│                                                                  │
-└─────────────────────────────────────────────────────────────────┘
 ```
 
 ---
