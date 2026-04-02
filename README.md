@@ -450,7 +450,7 @@ aleam/
 | 📦 PyPI | [pypi.org/project/aleam](https://pypi.org/project/aleam) |
 | 🐛 Issues | [GitHub Issues](https://github.com/fardinsabid/aleam/issues) |
 | 📖 Documentation | [GitHub Docs](https://github.com/fardinsabid/aleam/blob/main/docs/index.md) |
-| 📄 Research Paper | [ALEAM_RESEARCH_PAPER.md](ALEAM_RESEARCH_PAPER.md) |
+| 📄 Research Paper | [ALEAM_RESEARCH_PAPER.md](https://github.com/fardinsabid/aleam/blob/main/docs/ALEAM_RESEARCH_PAPER.md) |
 
 ---
 

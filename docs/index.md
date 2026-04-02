@@ -572,7 +572,7 @@ arr = cuda_gen.cupy_randn((10000, 10000))  # 100M numbers in ~1s
 | π Estimation | 0.0105% error | ✓ EXCELLENT |
 | Shannon Entropy | 0.9999 | ✓ NEAR-PERFECT |
 
-For full mathematical derivation, see the [research paper](https://github.com/fardinsabid/aleam/blob/main/ALEAM_RESEARCH_PAPER.md).
+For full mathematical derivation, see the [research paper](https://github.com/fardinsabid/aleam/blob/main/docs/ALEAM_RESEARCH_PAPER.md).
 
 ---
 
@@ -639,7 +639,7 @@ MIT License. See [LICENSE](https://github.com/fardinsabid/aleam/blob/main/LICENS
 | 📦 PyPI | [pypi.org/project/aleam](https://pypi.org/project/aleam) |
 | 🐛 Issues | [GitHub Issues](https://github.com/fardinsabid/aleam/issues) |
 | 📖 Source | [GitHub Repository](https://github.com/fardinsabid/aleam) |
-| 📄 Research Paper | [ALEAM_RESEARCH_PAPER.md](https://github.com/fardinsabid/aleam/blob/main/ALEAM_RESEARCH_PAPER.md) |
+| 📄 Research Paper | [ALEAM_RESEARCH_PAPER.md](https://github.com/fardinsabid/aleam/blob/main/docs/ALEAM_RESEARCH_PAPER.md) |
 
 ---
 
