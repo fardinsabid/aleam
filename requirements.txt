@@ -1,0 +1,55 @@
+# requirements.txt - Aleam Python dependencies
+# Version: 1.0.3
+# License: MIT
+
+# Core dependency
+numpy>=1.24.0
+
+# ============================================================================
+# Optional framework dependencies (user installs as needed)
+# ============================================================================
+
+# PyTorch (CUDA version)
+# torch>=2.0.0
+
+# PyTorch (CPU version)
+# torch>=2.0.0 --index-url https://download.pytorch.org/whl/cpu
+
+# TensorFlow (GPU version)
+# tensorflow>=2.12.0
+
+# TensorFlow (CPU version)
+# tensorflow-cpu>=2.12.0
+
+# JAX (GPU version)
+# jax>=0.4.0 jaxlib>=0.4.0+cuda12 -f https://storage.googleapis.com/jax-releases/jax_cuda_releases.html
+
+# JAX (CPU version)
+# jax>=0.4.0 jaxlib>=0.4.0
+
+# CuPy (CUDA 12.x)
+# cupy-cuda12x>=12.0.0
+
+# CuPy (CUDA 11.x)
+# cupy-cuda11x>=11.0.0
+
+# Dask
+# dask>=2023.0.0
+
+# Pandas
+# pandas>=1.5.0
+
+# Polars
+# polars>=0.18.0
+
+# Xarray
+# xarray>=2023.0.0
+
+# PyMC
+# pymc>=5.0.0
+
+# Scipy (for advanced distributions)
+# scipy>=1.9.0
+
+# Numba (for custom CUDA kernels)
+# numba>=0.57.0

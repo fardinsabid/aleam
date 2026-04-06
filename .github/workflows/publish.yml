@@ -1,0 +1,46 @@
+name: Security Scan
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+  workflow_dispatch:
+
+jobs:
+  security:
+    name: Security vulnerability scan
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.11'
+
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install bandit safety
+
+    - name: Run bandit
+      run: |
+        bandit -r aleam/ -f json -o bandit-report.json || true
+
+    - name: Run safety check
+      run: |
+        safety check --json > safety-report.json || true
+
+    - name: Upload bandit results
+      uses: actions/upload-artifact@v4
+      with:
+        name: bandit-report
+        path: bandit-report.json
+
+    - name: Upload safety results
+      uses: actions/upload-artifact@v4
+      with:
+        name: safety-report
+        path: safety-report.json

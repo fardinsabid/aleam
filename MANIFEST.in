@@ -1,0 +1,105 @@
+# MANIFEST.in - Aleam package manifest
+# Version: 1.0.3
+# License: MIT
+
+# ============================================================================
+# Core package files (required for PyPI)
+# ============================================================================
+include README.md
+include LICENSE
+include CONTRIBUTING.md
+include pyproject.toml
+include setup.py
+include MANIFEST.in
+include requirements.txt
+include requirements-dev.txt
+
+# ============================================================================
+# Python package files (required)
+# ============================================================================
+recursive-include aleam *.py
+recursive-include aleam *.pyi
+include aleam/py.typed
+
+# ============================================================================
+# Python files in src (for integrations/__init__.py)
+# ============================================================================
+recursive-include src *.py
+
+# ============================================================================
+# C++ source files (required for compilation)
+# ============================================================================
+recursive-include src *.cpp
+recursive-include src *.cc
+recursive-include src *.cxx
+recursive-include src *.h
+recursive-include src *.hpp
+
+# ============================================================================
+# CUDA source files (required for GPU support)
+# ============================================================================
+recursive-include src *.cu
+recursive-include src *.cuh
+
+# ============================================================================
+# Public headers (required)
+# ============================================================================
+recursive-include include *.h
+recursive-include include *.hpp
+
+# ============================================================================
+# Exclude everything else (tests, examples, assets, docs, benchmarks)
+# ============================================================================
+prune tests
+prune benchmarks
+prune examples
+prune docs
+prune assets
+prune .github
+
+# ============================================================================
+# Exclude build artifacts and cache files
+# ============================================================================
+global-exclude *.pyc
+global-exclude *.pyo
+global-exclude *.o
+global-exclude *.a
+global-exclude *.obj
+global-exclude *.lib
+global-exclude *.so
+global-exclude *.pyd
+global-exclude *.dylib
+global-exclude *.log
+global-exclude *.tmp
+global-exclude *.swp
+global-exclude *.swo
+global-exclude *~
+global-exclude .DS_Store
+global-exclude Thumbs.db
+global-exclude .coverage
+global-exclude .pytest_cache
+global-exclude .mypy_cache
+global-exclude .ruff_cache
+global-exclude .benchmarks
+global-exclude .tox
+global-exclude .nox
+
+# ============================================================================
+# Exclude development directories
+# ============================================================================
+prune build
+prune dist
+prune *.egg-info
+prune __pycache__
+prune .git
+prune .vscode
+prune .idea
+prune .venv
+prune venv
+prune env
+prune ai-env
+prune data
+prune outputs
+prune logs
+prune htmlcov
+prune site
