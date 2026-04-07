@@ -1,0 +1,170 @@
+name: Build and Publish to PyPI
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version tag (e.g., v1.0.3)'
+        required: true
+        default: 'v1.0.3'
+        type: string
+
+jobs:
+  # Job 1: Build x86_64 wheel (for Colab, most Linux servers)
+  build-x86_64:
+    name: Build x86_64 wheel
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.inputs.version }}
+      
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y build-essential cmake
+          pip install pybind11 build
+      
+      - name: Build wheel
+        run: python -m build --wheel
+      
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: x86_64-wheel
+          path: dist/*.whl
+
+  # Job 2: Build ARM64 wheel (for Raspberry Pi, Apple Silicon)
+  build-arm64:
+    name: Build ARM64 wheel
+    runs-on: ubuntu-24.04-arm  # GitHub's ARM64 runner
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.inputs.version }}
+      
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y build-essential cmake
+          pip install pybind11 build
+      
+      - name: Build wheel
+        run: python -m build --wheel
+      
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: arm64-wheel
+          path: dist/*.whl
+
+  # Job 3: Build macOS x86_64 wheel
+  build-macos-x86:
+    name: Build macOS x86_64 wheel
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.inputs.version }}
+      
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      
+      - name: Install dependencies
+        run: |
+          brew install cmake
+          pip install pybind11 build
+      
+      - name: Build wheel
+        run: python -m build --wheel
+      
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: macos-x86-wheel
+          path: dist/*.whl
+
+  # Job 4: Build macOS ARM64 (Apple Silicon) wheel
+  build-macos-arm:
+    name: Build macOS ARM64 wheel
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.inputs.version }}
+      
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      
+      - name: Install dependencies
+        run: |
+          brew install cmake
+          pip install pybind11 build
+      
+      - name: Build wheel for ARM64
+        run: |
+          export ARCHFLAGS="-arch arm64"
+          python -m build --wheel
+      
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: macos-arm-wheel
+          path: dist/*.whl
+
+  # Job 5: Build Windows wheel
+  build-windows:
+    name: Build Windows wheel
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.inputs.version }}
+      
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      
+      - name: Install dependencies
+        run: |
+          pip install pybind11 build
+      
+      - name: Build wheel
+        run: python -m build --wheel
+      
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: windows-wheel
+          path: dist/*.whl
+
+  # Job 6: Publish all wheels to PyPI
+  publish:
+    name: Publish to PyPI
+    runs-on: ubuntu-latest
+    needs: [build-x86_64, build-arm64, build-macos-x86, build-macos-arm, build-windows]
+    steps:
+      - name: Download all wheels
+        uses: actions/download-artifact@v4
+        with:
+          pattern: *-wheel
+          path: dist
+      
+      - name: List all wheels
+        run: ls -la dist/
+      
+      - name: Upload to PyPI
+        uses: pypa/gh-action-pypi-publish@release
+        with:
+          password: ${{ secrets.PYPI_API_TOKEN }}
+          skip-existing: true
