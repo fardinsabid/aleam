@@ -164,8 +164,8 @@ batch = rng.sample(population, 64)      # Random 64 unique indices
 items = [1, 2, 3, 4, 5]
 rng.shuffle(items)                      # [3, 1, 5, 2, 4]
 
-# Random bytes for cryptography
-key = rng.random_bytes(32)              # 32 cryptographically secure bytes
+# Random bytes (returns list of integers)
+key = rng.random_bytes(32)              # 32 random bytes as list of ints
 ```
 
 ---
@@ -192,7 +192,7 @@ key = rng.random_bytes(32)              # 32 cryptographically secure bytes
 | `normalvariate(mu, sigma)` | Alias for `gauss` | `rng.normalvariate(0, 1)` |
 | `sample(population, k)` | Sample k unique elements | `rng.sample(list(range(100)), 10)` |
 | `shuffle(lst)` | Shuffle list in-place | `rng.shuffle(my_list)` |
-| `random_bytes(n)` | Generate n random bytes | `rng.random_bytes(32)` |
+| `random_bytes(n)` | Generate n random bytes (as list of ints) | `rng.random_bytes(32)` |
 
 ### Example: Sampling
 
@@ -308,9 +308,6 @@ ai = al.AIRandom()
 noise = ai.gradient_noise(shape=100, scale=0.1)
 print(f"Noise mean: {np.mean(noise):.4f}, std: {np.std(noise):.4f}")
 
-# For 2D shapes, use gradient_noise_2d
-noise_2d = ai.gradient_noise_2d(rows=4, cols=4, scale=0.1)
-
 # Latent space vector for generative models
 latent = ai.latent_vector(dim=512, distribution="normal")
 print(f"Latent vector shape: {len(latent)}")
@@ -381,9 +378,9 @@ print(f"Single latent vector shape: {len(z)}")
 batch = sampler.sample(n=10)
 print(f"Batch shape: {len(batch)} x {len(batch[0])}")
 
-# Linear interpolation between two vectors
-z1 = sampler.sample_one()
-z2 = sampler.sample_one()
+# Linear interpolation between two vectors (as Python lists)
+z1 = sampler.sample_one().tolist()
+z2 = sampler.sample_one().tolist()
 interpolated = sampler.interpolate(z1, z2, steps=5)
 
 for i, vec in enumerate(interpolated):
@@ -394,7 +391,7 @@ for i, vec in enumerate(interpolated):
 
 ## Array Operations
 
-Aleam provides NumPy-style array generation functions that return numpy arrays directly.
+Aleam provides NumPy-style array generation functions that return **numpy arrays directly**.
 
 ### Module-Level Array Functions
 
@@ -411,7 +408,7 @@ import aleam as al
 import numpy as np
 
 # 1D array of random floats (returns numpy array)
-arr_1d = al.random_array(100)
+arr_1d = al.random_array((10,))
 print(f"1D shape: {arr_1d.shape}, type: {type(arr_1d)}")
 
 # 2D array (returns numpy array)
@@ -419,7 +416,7 @@ arr_2d = al.random_array((10, 10))
 print(f"2D shape: {arr_2d.shape}")
 
 # Normal distribution array
-norm_arr = al.randn_array(1000, mu=0, sigma=1)
+norm_arr = al.randn_array((1000,), mu=0, sigma=1)
 print(f"Normal mean: {np.mean(norm_arr):.4f}, std: {np.std(norm_arr):.4f}")
 
 # Integer array
@@ -526,14 +523,13 @@ import aleam as al
 import numpy as np
 
 # Direct array generation (returns numpy array)
-arr = al.random_array((100, 100))
-np_arr = np.array(arr)  # Already a numpy array, no conversion needed
+arr = al.random_array((100, 100))  # Already a numpy array
 
 # Or use module-level functions
 arr = al.random_array((1000,))          # 1D numpy array
 matrix = al.random_array((10, 10))      # 2D numpy array
-norm_arr = al.randn_array(1000, 0, 1)   # Normal distribution
-int_arr = al.randint_array((50,), 0, 10) # Integers
+norm_arr = al.randn_array((1000,), 0, 1)   # Normal distribution
+int_arr = al.randint_array((50,), 0, 10)   # Integers
 ```
 
 ---

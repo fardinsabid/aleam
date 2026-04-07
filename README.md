@@ -195,8 +195,8 @@ batch = rng.sample(population, 64)      # Random 64 unique indices
 items = [1, 2, 3, 4, 5]
 rng.shuffle(items)                      # [3, 1, 5, 2, 4]
 
-# Random bytes for cryptography
-key = rng.random_bytes(32)              # 32 cryptographically secure bytes
+# Random bytes (returns list of integers)
+key = rng.random_bytes(32)              # 32 random bytes as list
 ```
 
 ---
@@ -213,9 +213,11 @@ key = rng.random_bytes(32)              # 32 cryptographically secure bytes
 | `choice(seq)` | Random element from sequence | `rng.choice(['a', 'b', 'c'])` |
 | `shuffle(lst)` | Shuffle list in-place | `rng.shuffle(my_list)` |
 | `sample(pop, k)` | Sample k unique elements | `rng.sample(list(range(100)), 10)` |
-| `random_bytes(n)` | Generate n random bytes | `rng.random_bytes(32)` |
+| `random_bytes(n)` | Generate n random bytes (as list) | `rng.random_bytes(32)` |
 
 ### 📈 Statistical Distributions
+
+All distributions are available as methods on the `Aleam` instance:
 
 | Distribution | Method | Example |
 |--------------|--------|---------|
@@ -245,53 +247,86 @@ key = rng.random_bytes(32)              # 32 cryptographically secure bytes
 
 ### 🔢 Array Operations
 
+Module-level functions that return **numpy arrays directly**:
+
 | Function | Description | Example |
 |----------|-------------|---------|
-| `random_array(shape)` | Uniform random array (returns numpy array) | `al.random_array((100, 100))` |
-| `randn_array(shape, mu, sigma)` | Normal random array | `al.randn_array(1000, 0, 1)` |
+| `random_array(shape)` | Uniform random array | `al.random_array((100, 100))` |
+| `randn_array(shape, mu, sigma)` | Normal random array | `al.randn_array((1000,), 0, 1)` |
 | `randint_array(shape, low, high)` | Integer random array | `al.randint_array((50,), 0, 10)` |
 
 ---
 
 ## 🔌 Framework Integrations
 
-### PyTorch (with Aleam true seeds)
+Aleam provides true randomness to ML frameworks via **true random seeds**.
+
+### PyTorch
 
 ```python
 import torch
 import aleam as al
 
+# Get true random seed from Aleam
 rng = al.Aleam()
 seed = rng.random_uint64()
+
+# Set PyTorch seed
 torch.manual_seed(seed)
 
+# Generate tensors on GPU
 tensor = torch.randn(100, 100, device='cuda')
 ```
 
-### TensorFlow (with Aleam true seeds)
+### TensorFlow
 
 ```python
 import tensorflow as tf
 import aleam as al
 
+# Get true random seed from Aleam
 rng = al.Aleam()
 seed = rng.random_uint64()
+
+# Set TensorFlow seed
 tf.random.set_seed(seed)
 
+# Generate tensors
 tensor = tf.random.normal((100, 100))
 ```
 
-### CuPy (Fastest GPU - with Aleam true seeds)
+### JAX
+
+```python
+import jax
+import aleam as al
+
+# Get true random seed from Aleam
+rng = al.Aleam()
+seed = rng.random_uint64()
+
+# Create JAX key
+key = jax.random.key(seed)
+
+# Generate tensors
+tensor = jax.random.normal(key, (100, 100))
+```
+
+### CuPy (Fastest GPU)
 
 ```python
 import cupy as cp
 import aleam as al
 
+# Get true random seed from Aleam
 rng = al.Aleam()
 seed = rng.random_uint64()
+
+# Set CuPy seed
 cp.random.seed(seed)
 
-arr = cp.random.randn(10000, 10000)  # 100M numbers in <0.01s
+# Generate 100 million true random numbers on GPU
+arr = cp.random.randn(10000, 10000)  # 14.4B ops/sec!
 ```
 
 ---
@@ -463,7 +498,10 @@ aleam/
 │
 ├── docs/
 │   ├── ALEAM_RESEARCH_PAPER.md
-│   └── index.md
+│   ├── CHANGELOG.md
+│   ├── index.md
+│   ├── INSTALLATION.md
+│   └── ROADMAP.md
 │
 ├── setup.py
 ├── pyproject.toml
@@ -472,7 +510,9 @@ aleam/
 ├── requirements-dev.txt
 ├── LICENSE
 ├── README.md
+├── SECURITY.md
 ├── CONTRIBUTING.md
+├── CODE_OF_CONDUCT.md
 └── .gitignore
 ```
 
@@ -508,6 +548,10 @@ arr = cp.random.randn(10000, 10000)  # 14.4B ops/sec
 ### Q: Why does `sample()` require a list?
 
 **A:** The C++ bindings accept Python lists directly. Use `list(range(10000))` instead of `range(10000)`.
+
+### Q: What does `random_bytes()` return?
+
+**A:** It returns a Python list of integers (0-255), not a bytes object.
 
 ---
 

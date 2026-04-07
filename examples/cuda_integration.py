@@ -102,7 +102,9 @@ def main():
     print("\n  Normal Random (float32):")
     arr_normal = cp.random.randn(5, 5).astype('float32')
     print(f"    Shape: {arr_normal.shape}")
-    print(f"    Sample:\n{arr_normal.get():.4f}")
+    # Format 2D array properly
+    print("    Sample:")
+    print(np.array2string(cp.asnumpy(arr_normal), precision=4, suppress_small=True))
     
     # Generate random integers on GPU
     print("\n  Random Integers (int32):")

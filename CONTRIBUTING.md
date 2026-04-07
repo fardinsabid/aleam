@@ -47,8 +47,8 @@ We welcome suggestions for:
 1. **Fork the repository** and create your branch from `main`
 2. **Install development dependencies**: `pip install -e .[dev]`
 3. **Make your changes** following the coding standards
-4. **Build the C++ extension**: `python setup.py build_ext --inplace`
-5. **Run tests**: `pytest tests/`
+4. **Build the C++ extension**: `python -m build`
+5. **Run tests**: `pytest tests/ -v`
 6. **Run benchmarks**: `python benchmarks/benchmark_core.py` (if performance-related)
 7. **Update documentation** if needed
 8. **Submit the pull request** with a clear description
@@ -87,7 +87,7 @@ python -m venv venv
 source venv/bin/activate  # On Windows: venv\Scripts\activate
 
 # Install build dependencies
-pip install pybind11 numpy setuptools wheel
+pip install pybind11 numpy setuptools wheel build
 
 # Install in development mode
 pip install -e .[dev]
@@ -239,7 +239,10 @@ aleam/
 │
 ├── docs/
 │   ├── ALEAM_RESEARCH_PAPER.md
-│   └── index.md
+│   ├── CHANGELOG.md
+│   ├── index.md
+│   ├── INSTALLATION.md
+│   └── ROADMAP.md
 │
 ├── setup.py
 ├── pyproject.toml
@@ -248,7 +251,9 @@ aleam/
 ├── requirements-dev.txt
 ├── LICENSE
 ├── README.md
+├── SECURITY.md
 ├── CONTRIBUTING.md
+├── CODE_OF_CONDUCT.md
 └── .gitignore
 ```
 
@@ -424,6 +429,47 @@ def benchmark_random_array():
     return shape[0] * shape[1] / elapsed
 ```
 
+## Building for Multiple Platforms
+
+### Linux x86_64
+
+```bash
+# Build wheel
+python -m build --wheel
+
+# Output: dist/aleam-*.whl (manylinux2014_x86_64)
+```
+
+### Linux ARM64 (aarch64)
+
+```bash
+# On ARM64 machine
+python -m build --wheel
+
+# Rename for manylinux compatibility
+cd dist
+mv *linux_aarch64.whl *manylinux2014_aarch64.whl
+cd ..
+```
+
+### macOS (Intel and Apple Silicon)
+
+```bash
+# Intel
+python -m build --wheel
+
+# Apple Silicon
+export ARCHFLAGS="-arch arm64"
+python -m build --wheel
+```
+
+### Windows
+
+```bash
+python -m build --wheel
+# Requires Visual Studio build tools
+```
+
 ## Documentation
 
 ### Building Documentation
@@ -504,7 +550,7 @@ To add a new statistical distribution:
 3. **Add to distributions.h**: Declare inline function
 4. **Add to distributions.cpp**: Implement if complex
 5. **Add to module.cpp**: Bind to Python
-6. **Add to __init__.py**: Export to Python
+6. **Add to __init__.py**: Export to Python (via `_c_core`)
 7. **Add tests**: `tests/test_statistical.py`
 8. **Update documentation**: `docs/index.md`
 
@@ -541,41 +587,6 @@ To add a new framework integration:
 6. **Add to pyproject.toml**: Add optional dependency
 7. **Add tests**: `tests/test_integrations.py`
 8. **Update documentation**: `docs/index.md`
-
-## Building for Multiple Platforms
-
-### Linux x86_64
-
-```bash
-python -m build --wheel
-# Output: dist/aleam-*.whl (manylinux2014_x86_64)
-```
-
-### Linux ARM64 (aarch64)
-
-```bash
-# On ARM64 machine or using emulation
-python -m build --wheel
-# Output: dist/aleam-*.whl (manylinux2014_aarch64)
-```
-
-### macOS (Intel and Apple Silicon)
-
-```bash
-# Intel
-python -m build --wheel
-
-# Apple Silicon
-export ARCHFLAGS="-arch arm64"
-python -m build --wheel
-```
-
-### Windows
-
-```bash
-python -m build --wheel
-# Requires Visual Studio build tools
-```
 
 ## Security Vulnerabilities
 

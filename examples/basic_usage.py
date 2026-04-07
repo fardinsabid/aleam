@@ -7,6 +7,9 @@ capabilities of Aleam including basic random numbers, integers,
 sequences, and distributions.
 
 Note: The C++ API uses numpy arrays for batch operations.
+- gauss() requires both mu and sigma parameters (no defaults)
+- random_bytes() returns a list of integers, not a bytes object
+- get_thread_local_instance() is not exposed in Python bindings
 """
 
 import aleam as al
@@ -27,7 +30,7 @@ def main():
     print(f"  Random int (1-100): {rng.randint(1, 100)}")
     print(f"  Random choice: {rng.choice(['AI', 'ML', 'DL', 'Aleam'])}")
     print(f"  Random uniform (5, 10): {rng.uniform(5, 10):.4f}")
-    print(f"  Random normal (0,1): {rng.gauss():.4f}")
+    print(f"  Random normal (0,1): {rng.gauss(0, 1):.4f}")
     
     print("\n Sampling Without Replacement:")
     print("  Note: sample() requires a list, not a range object")
@@ -42,8 +45,13 @@ def main():
     print(f"  Shuffled: {items}")
     
     print("\n Random Bytes:")
-    print(f"  8 random bytes: {rng.random_bytes(8).hex()}")
-    print(f"  16 random bytes: {rng.random_bytes(16).hex()}")
+    # random_bytes returns a list of integers (0-255)
+    bytes_8 = rng.random_bytes(8)
+    bytes_16 = rng.random_bytes(16)
+    print(f"  8 random bytes (list): {bytes_8}")
+    print(f"  8 random bytes (hex): {''.join(f'{b:02x}' for b in bytes_8)}")
+    print(f"  16 random bytes (list): {bytes_16[:5]}... (truncated)")
+    print(f"  16 random bytes (hex): {''.join(f'{b:02x}' for b in bytes_16)}")
     
     print("\n Batch Generation (100 numbers in one call):")
     batch = rng.random_batch(100)
@@ -63,11 +71,8 @@ def main():
     print(f"  entropy_source: {stats.entropy_source}")
     print(f"  entropy_bits_per_call: {stats.entropy_bits_per_call}")
     
-    print("\n Thread-Local Instance:")
-    # Get thread-local instance for multi-threaded code
-    tl_rng = al.get_thread_local_instance()
-    print(f"  Thread-local random: {tl_rng.random():.6f}")
-    print(f"  Same as default? {tl_rng is rng}")
+    print("\n Note: get_thread_local_instance() is a C++ function not exposed in Python.")
+    print("       Each Aleam() instance is independent and thread-safe by default.")
     
     print("\n" + "=" * 60)
     print(" Basic usage complete")
