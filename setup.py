@@ -86,15 +86,15 @@ def get_sources():
     
     # Add CUDA sources if available
     if cuda_available():
-        print("✅ CUDA detected - building with GPU kernel support")
+        print("[OK] CUDA detected - building with GPU kernel support")
         sources.extend([
             "src/aleam/cuda/cuda_kernels.cu",
             "src/aleam/cuda/cuda_uniform.cu",
             "src/aleam/cuda/cuda_normal.cu",
         ])
     else:
-        print("💻 CUDA not detected - building without GPU kernels")
-        print("   GPU acceleration still works via PyTorch/TensorFlow/JAX")
+        print("[INFO] CUDA not detected - building without GPU kernels")
+        print("       GPU acceleration still works via PyTorch/TensorFlow/JAX")
     
     return sources
 
@@ -255,8 +255,8 @@ if __name__ == "__main__":
     print(f"Platform: {platform.platform()}")
     print(f"CUDA detected: {cuda_available()}")
     if cuda_available():
-        print("  ✅ Building with GPU kernel support")
+        print("  [OK] Building with GPU kernel support")
     else:
-        print("  💻 Building without GPU kernels (GPU still works via PyTorch/TF/JAX)")
+        print("  [INFO] Building without GPU kernels (GPU still works via PyTorch/TF/JAX)")
     print("\nFor documentation: https://github.com/fardinsabid/aleam")
     print("=" * 60)
