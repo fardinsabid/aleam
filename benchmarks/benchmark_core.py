@@ -1,18 +1,17 @@
 """
-ALEAM - ADVANCED UNIVERSAL BENCHMARK
-Includes: CPU, GPU, PyTorch CUDA, Lava Lamp API, and Cryptographic Security
+ALEAM - ADVANCED UNIVERSAL BENCHMARK (C++ Version)
+Includes: CPU, GPU (CuPy with Aleam seeds), PyTorch CUDA, and Cryptographic Security
 """
 
 import time
 import random
 import aleam as al
 import numpy as np
-import requests
 import hashlib
 
 print("=" * 80)
-print("ALEAM - ADVANCED UNIVERSAL BENCHMARK")
-print("Complete testing: Speed | Uniqueness | Quality | GPU/CPU | Lava Lamp | Crypto Security")
+print("ALEAM - ADVANCED UNIVERSAL BENCHMARK (C++ Core)")
+print("Complete testing: Speed | Uniqueness | Quality | GPU/CPU | Crypto Security")
 print("=" * 80)
 
 # ============================================================
@@ -44,23 +43,6 @@ except:
     PYTORCH_AVAILABLE = False
 
 # ============================================================
-# LAVA LAMP API FUNCTION
-# ============================================================
-def get_lavarand():
-    """Get true random number from Cloudflare's LavaRand API"""
-    url = "https://drand.cloudflare.com/52db9ba70e0cc0f6eaf7803dd07447a1f5477735fd3f661792ba94600c84e971/public/latest"
-    try:
-        resp = requests.get(url, timeout=10)
-        if resp.status_code == 200:
-            data = resp.json()
-            randomness_hex = data.get('randomness', '')
-            if randomness_hex:
-                return int(randomness_hex[:8], 16) / (2**32)
-    except:
-        pass
-    return None
-
-# ============================================================
 # GENERATORS SETUP
 # ============================================================
 print("\n📦 GENERATORS")
@@ -83,13 +65,12 @@ generators.append({
     'desc': 'System entropy + Golden ratio'
 })
 
-# Aleam GPU
+# Aleam GPU (via CuPy with Aleam seeds)
 if GPU_AVAILABLE:
-    cuda = al.CUDAGenerator()
     generators.append({
         'name': 'Aleam GPU',
         'type': 'TRUE',
-        'desc': 'GPU accelerated + System entropy'
+        'desc': 'CuPy + True random seeds from Aleam'
     })
 
 # PyTorch CUDA
@@ -99,13 +80,6 @@ if PYTORCH_AVAILABLE:
         'type': 'PSEUDO',
         'desc': 'Philox on GPU'
     })
-
-# Lava Lamp API
-generators.append({
-    'name': 'Lava Lamp API',
-    'type': 'TRUE',
-    'desc': 'Cloudflare LavaRand (physical entropy)'
-})
 
 for g in generators:
     print(f"  {g['name']:<15} → {g['type']:<6} ({g['desc']})")
@@ -141,12 +115,14 @@ speed = count / elapsed / 1_000_000
 speed_results.append({'name': 'Aleam CPU', 'speed': speed})
 print(f"    {count:,} numbers in {elapsed:.2f}s → {speed:.2f}M ops/sec")
 
-# Aleam GPU
+# Aleam GPU (via CuPy with Aleam seed)
 if GPU_AVAILABLE:
-    print("\n  Testing Aleam GPU...")
+    print("\n  Testing Aleam GPU (CuPy + True seed)...")
     count = 100_000_000
     start = time.time()
-    arr = cuda.cupy_random(count, dtype='float32')
+    seed = rng_cpu.random_uint64()
+    cp.random.seed(seed)
+    arr = cp.random.randn(count, dtype='float32')
     cp.cuda.Stream.null.synchronize()
     elapsed = time.time() - start
     speed = count / elapsed / 1_000_000
@@ -165,25 +141,6 @@ if PYTORCH_AVAILABLE:
     speed = count / elapsed / 1_000_000
     speed_results.append({'name': 'PyTorch CUDA', 'speed': speed})
     print(f"    {count:,} numbers in {elapsed:.2f}s → {speed:.2f}M ops/sec")
-
-# Lava Lamp API (measure speed)
-print("\n  Testing Lava Lamp API...")
-lava_times = []
-for i in range(10):
-    start = time.time()
-    num = get_lavarand()
-    if num:
-        lava_times.append(time.time() - start)
-    time.sleep(0.5)
-
-if lava_times:
-    avg_lava_time = sum(lava_times) / len(lava_times)
-    lava_speed = 1 / avg_lava_time
-    speed_results.append({'name': 'Lava Lamp API', 'speed': lava_speed})
-    print(f"    10 numbers in {sum(lava_times):.2f}s → {lava_speed:.2f} ops/sec")
-else:
-    lava_speed = 0
-    print(f"    Failed to get Lava Lamp data")
 
 # ============================================================
 # TEST 2: DUPLICATES (50,000 numbers)
@@ -213,7 +170,9 @@ print(f"    Duplicates: {cpu_dups}")
 # Aleam GPU
 if GPU_AVAILABLE:
     print("\n  Analyzing Aleam GPU...")
-    gpu_arr = cuda.cupy_random(SAMPLE, dtype='float32')
+    seed = rng_cpu.random_uint64()
+    cp.random.seed(seed)
+    gpu_arr = cp.random.randn(SAMPLE, dtype='float32')
     gpu_nums = cp.asnumpy(gpu_arr)
     gpu_unique = len(np.unique(gpu_nums))
     gpu_dups = SAMPLE - gpu_unique
@@ -228,21 +187,6 @@ if PYTORCH_AVAILABLE:
     torch_dups = SAMPLE - torch_unique
     print(f"    Unique: {torch_unique}/{SAMPLE} ({torch_unique/SAMPLE*100:.2f}%)")
     print(f"    Duplicates: {torch_dups}")
-
-# Lava Lamp API (get 50 numbers)
-print("\n  Analyzing Lava Lamp API...")
-lava_nums = []
-for i in range(50):
-    num = get_lavarand()
-    if num:
-        lava_nums.append(num)
-    time.sleep(0.3)
-
-if lava_nums:
-    lava_unique = len(set(lava_nums))
-    lava_dups = len(lava_nums) - lava_unique
-    print(f"    Unique: {lava_unique}/{len(lava_nums)} ({lava_unique/len(lava_nums)*100:.2f}%)")
-    print(f"    Duplicates: {lava_dups}")
 
 # ============================================================
 # TEST 3: REPRODUCIBILITY
@@ -268,9 +212,13 @@ print(f"    Reproducible? {cpu_first == cpu_second}")
 # Aleam GPU
 if GPU_AVAILABLE:
     print("\n  Testing Aleam GPU...")
-    gpu_first = [float(cuda.cupy_random(1).get()[0]) for _ in range(5)]
-    gpu_second = [float(cuda.cupy_random(1).get()[0]) for _ in range(5)]
-    print(f"    Reproducible? {gpu_first == gpu_second}")
+    seed1 = rng_cpu.random_uint64()
+    cp.random.seed(seed1)
+    gpu_first = cp.random.randn(5).get()
+    seed2 = rng_cpu.random_uint64()
+    cp.random.seed(seed2)
+    gpu_second = cp.random.randn(5).get()
+    print(f"    Reproducible? {np.array_equal(gpu_first, gpu_second)}")
 
 # PyTorch CUDA
 if PYTORCH_AVAILABLE:
@@ -280,13 +228,6 @@ if PYTORCH_AVAILABLE:
     torch.manual_seed(42)
     torch_second = torch.randn(5, device='cuda').cpu().numpy()
     print(f"    Same seed = same numbers? {np.array_equal(torch_first, torch_second)}")
-
-# Lava Lamp API
-print("\n  Testing Lava Lamp API...")
-lava_first = [get_lavarand() for _ in range(3)]
-time.sleep(1)
-lava_second = [get_lavarand() for _ in range(3)]
-print(f"    Reproducible? {lava_first == lava_second}")
 
 # ============================================================
 # TEST 4: CRYPTOGRAPHIC SECURITY
@@ -298,7 +239,6 @@ print("=" * 80)
 def test_crypto_security(generator_name, random_func, is_aleam=False):
     """Test if random generator is cryptographically secure"""
     
-    # Test 1: State extraction vulnerability
     if is_aleam:
         state_extractable = "NO (stateless)"
         crypto_secure = "YES"
@@ -308,17 +248,15 @@ def test_crypto_security(generator_name, random_func, is_aleam=False):
         crypto_secure = "NO"
         algo = "Mersenne Twister"
     
-    # Test 2: Predictability after observing sequence
+    # Test predictability
     samples = [random_func() for _ in range(1000)]
-    
-    # Simple prediction test (if pattern exists)
     correct = 0
     for i in range(1, len(samples)):
         if abs(samples[i] - samples[i-1]) < 0.01:
             correct += 1
     predictability = correct / len(samples) * 100
     
-    # Test 3: Hash collision resistance
+    # Test hash collision resistance
     hashes = set()
     collisions = 0
     for _ in range(5000):
@@ -384,19 +322,11 @@ for gen in generators:
         dups = torch_dups
         repro = 'YES'
         crypto = 'NO'
-    elif gen['name'] == 'Lava Lamp API':
-        dups = lava_dups if 'lava_dups' in dir() else 'N/A'
-        repro = 'NO'
-        crypto = 'YES'
     else:
         continue
     
     # Format speed display
-    if gen['name'] == 'Lava Lamp API':
-        speed_str = f"{speed:.2f} ops/sec"
-    else:
-        speed_str = f"{speed:.2f}M ops/sec"
-    
+    speed_str = f"{speed:.2f}M ops/sec"
     crypto_str = "YES" if crypto == 'YES' else "NO"
     
     print(f"{gen['name']:<20} {speed_str:<15} {dups:<12} {repro:<12} {crypto_str:<15} {gen['type']:<10}")

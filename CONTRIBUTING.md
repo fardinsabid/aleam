@@ -20,7 +20,7 @@ Before submitting a bug report, please:
 
 - Python version (`python --version`)
 - Aleam version (`pip show aleam`)
-- Operating system and architecture
+- Operating system and architecture (`uname -m` on Linux)
 - Minimal code example that reproduces the issue
 - Expected vs actual behavior
 - Full error message and stack trace
@@ -32,6 +32,7 @@ We welcome suggestions for:
 - New statistical distributions
 - Additional framework integrations
 - Performance improvements
+- CUDA kernel optimizations
 - Documentation improvements
 
 **When suggesting an enhancement, include:**
@@ -46,10 +47,11 @@ We welcome suggestions for:
 1. **Fork the repository** and create your branch from `main`
 2. **Install development dependencies**: `pip install -e .[dev]`
 3. **Make your changes** following the coding standards
-4. **Run tests**: `pytest tests/`
-5. **Run benchmarks**: `python benchmarks/benchmark_core.py` (if performance-related)
-6. **Update documentation** if needed
-7. **Submit the pull request** with a clear description
+4. **Build the C++ extension**: `python setup.py build_ext --inplace`
+5. **Run tests**: `pytest tests/`
+6. **Run benchmarks**: `python benchmarks/benchmark_core.py` (if performance-related)
+7. **Update documentation** if needed
+8. **Submit the pull request** with a clear description
 
 ## Development Setup
 
@@ -58,10 +60,20 @@ We welcome suggestions for:
 | Requirement | Version | Purpose |
 |-------------|---------|---------|
 | Python | 3.8+ | Main development |
-| C++ Compiler | C++17 | Core compilation |
-| CMake | 3.15+ | Build system |
+| C++ Compiler | C++17 | Core compilation (GCC, Clang, MSVC) |
+| pybind11 | 2.10+ | Python bindings |
+| CMake | 3.15+ | Build system (optional) |
 | CUDA Toolkit | 11.0+ | GPU support (optional) |
 | Git | Latest | Version control |
+
+### Platform-Specific Requirements
+
+| Platform | Required Packages |
+|----------|-------------------|
+| **Ubuntu/Debian** | `sudo apt install build-essential cmake` |
+| **Arch Linux** | `sudo pacman -S base-devel cmake` |
+| **macOS** | `xcode-select --install && brew install cmake` |
+| **Windows** | Visual Studio 2019+ with C++ development tools |
 
 ### Clone and Install
 
@@ -73,6 +85,9 @@ cd aleam
 # Create virtual environment (recommended)
 python -m venv venv
 source venv/bin/activate  # On Windows: venv\Scripts\activate
+
+# Install build dependencies
+pip install pybind11 numpy setuptools wheel
 
 # Install in development mode
 pip install -e .[dev]
@@ -88,10 +103,10 @@ pytest tests/ -v
 python benchmarks/benchmark_core.py
 
 # Test the installation
-python -c "import aleam as al; print(al.random())"
+python -c "import aleam as al; print(al.random()); print(al.__version__)"
 ```
 
-## Project Structure
+## Project Structure (C++ Core)
 
 ```
 aleam/
@@ -206,7 +221,6 @@ aleam/
 ├── assets/
 │   └── images/
 │       ├── benchmarks/
-│       │   ├── aleam_gpu_vs_lavarand_hd.png
 │       │   └── cpu_vs_gpu.png
 │       └── diagrams/
 │            └── algorithm.png
@@ -280,6 +294,7 @@ def example_function(param1: int, param2: str = "default") -> float:
   - Functions: `snake_case`
   - Variables: `snake_case`
   - Constants: `UPPER_SNAKE_CASE`
+  - Private members: `m_` prefix
 - **Comments**: Doxygen style for public APIs
 
 ```cpp
@@ -341,6 +356,7 @@ pytest -m gpu tests/
 ```python
 import aleam as al
 import pytest
+import numpy as np
 
 class TestExample:
     def test_random_range(self):
@@ -363,6 +379,13 @@ class TestExample:
         rng = al.Aleam()
         with pytest.raises(ValueError):
             rng.randint(10, 5)  # a > b
+    
+    def test_random_array_shape(self):
+        """Test that random_array returns correct shape."""
+        shape = (100, 100)
+        arr = al.random_array(shape)
+        assert arr.shape == shape
+        assert arr.dtype == np.float64
 ```
 
 ## Benchmarking
@@ -392,6 +415,13 @@ def benchmark_random():
         x = rng.random()
     elapsed = time.perf_counter() - start
     return ITERATIONS / elapsed
+
+def benchmark_random_array():
+    shape = (1000, 1000)
+    start = time.perf_counter()
+    arr = al.random_array(shape)
+    elapsed = time.perf_counter() - start
+    return shape[0] * shape[1] / elapsed
 ```
 
 ## Documentation
@@ -460,7 +490,7 @@ Aleam uses GitHub Actions for:
 
 | Workflow | Trigger | Purpose |
 |----------|---------|---------|
-| `tests.yml` | Push, PR | Run tests on multiple Python versions |
+| `tests.yml` | Push, PR | Run tests on multiple Python versions and platforms |
 | `publish.yml` | Release | Build and publish to PyPI |
 | `security.yml` | Daily | Security vulnerability scan |
 | `docs.yml` | Push to main | Deploy documentation |
@@ -490,6 +520,7 @@ public:
     
     RealType operator()() {
         // Implementation using m_rng.random()
+        // Use inverse transform or rejection sampling
     }
     
 private:
@@ -510,6 +541,41 @@ To add a new framework integration:
 6. **Add to pyproject.toml**: Add optional dependency
 7. **Add tests**: `tests/test_integrations.py`
 8. **Update documentation**: `docs/index.md`
+
+## Building for Multiple Platforms
+
+### Linux x86_64
+
+```bash
+python -m build --wheel
+# Output: dist/aleam-*.whl (manylinux2014_x86_64)
+```
+
+### Linux ARM64 (aarch64)
+
+```bash
+# On ARM64 machine or using emulation
+python -m build --wheel
+# Output: dist/aleam-*.whl (manylinux2014_aarch64)
+```
+
+### macOS (Intel and Apple Silicon)
+
+```bash
+# Intel
+python -m build --wheel
+
+# Apple Silicon
+export ARCHFLAGS="-arch arm64"
+python -m build --wheel
+```
+
+### Windows
+
+```bash
+python -m build --wheel
+# Requires Visual Studio build tools
+```
 
 ## Security Vulnerabilities
 
@@ -534,6 +600,7 @@ Please include:
 Contributors will be acknowledged in:
 
 - **README.md** - Contributors section (upon request)
+- **CHANGELOG.md** - Release notes
 
 ---
 
@@ -551,4 +618,3 @@ Made with ❤️ by Fardin Sabid
 🇧🇩 From Bangladesh, for the World 🌍
 
 </div>
-```

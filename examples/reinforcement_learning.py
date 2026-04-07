@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Reinforcement Learning example using Aleam true randomness.
+Reinforcement Learning example using Aleam true randomness (C++ Core).
 
 This example demonstrates using Aleam's true random numbers for
 exploration in reinforcement learning. True randomness ensures
@@ -39,7 +39,6 @@ class TrueRandomRL:
         
         # Use true randomness for exploration
         self.rng = al.Aleam()
-        self.ai = al.AIRandom()
         
         # Q-table for discrete state approximation
         self.q_table = {}
@@ -86,7 +85,7 @@ class TrueRandomRL:
             # Exploit using best action from Q-table
             if state_key not in self.q_table:
                 self.q_table[state_key] = np.zeros(self.action_dim)
-            return np.argmax(self.q_table[state_key])
+            return int(np.argmax(self.q_table[state_key]))
     
     def update(self, state, action, reward, next_state):
         """
@@ -108,7 +107,7 @@ class TrueRandomRL:
             self.q_table[next_key] = np.zeros(self.action_dim)
         
         # Q-learning update
-        best_next = np.max(self.q_table[next_key])
+        best_next = float(np.max(self.q_table[next_key]))
         td_target = reward + self.gamma * best_next
         td_error = td_target - self.q_table[state_key][action]
         self.q_table[state_key][action] += self.learning_rate * td_error
@@ -154,6 +153,8 @@ def mountain_car_environment():
             self.min_position = -1.2
             self.max_position = 0.6
             self.goal_position = 0.5
+            # Use Aleam for true randomness in environment
+            self.rng = al.Aleam()
             self.reset()
         
         def reset(self):
@@ -183,7 +184,7 @@ def mountain_car_environment():
             self.position += self.velocity
             self.position = np.clip(self.position, self.min_position, self.max_position)
             
-            # Penalize for being on the left side
+            # Penalty for each step (to encourage faster solution)
             reward = -1.0
             
             # Check if goal reached
@@ -200,24 +201,24 @@ def mountain_car_environment():
             pos_idx = int(pos_normalized * bar_length)
             bar = ['-'] * bar_length
             bar[pos_idx] = 'C'  # Car
-            bar[int(bar_length * 0.8)] = 'G'  # Goal
+            if self.goal_position <= self.max_position:
+                goal_idx = int((self.goal_position - self.min_position) / (self.max_position - self.min_position) * bar_length)
+                bar[goal_idx] = 'G'  # Goal
             print(''.join(bar))
     
-    env = MountainCar()
-    env.rng = al.Aleam()  # Use true randomness for environment
-    return env
+    return MountainCar()
 
 
 def main():
     print("=" * 70)
-    print("Aleam - Reinforcement Learning Example")
+    print("Aleam - Reinforcement Learning Example (C++ Core)")
     print("=" * 70)
     
     # Create environment and agent
     env = mountain_car_environment()
-    agent = TrueRandomRL(state_dim=2, action_dim=3, epsilon=0.1, learning_rate=0.1)
+    agent = TrueRandomRL(state_dim=2, action_dim=3, epsilon=0.1, learning_rate=0.1, gamma=0.99)
     
-    print("\n🎯 Training Mountain Car with True Random Exploration")
+    print("\n Training Mountain Car with True Random Exploration")
     print("   (Goal: Reach the top of the hill at position 0.5)")
     print("   True randomness enables genuine exploration without hidden patterns\n")
     
@@ -255,11 +256,13 @@ def main():
         if (episode + 1) % 50 == 0:
             avg_reward = np.mean(total_rewards[-50:])
             stats = agent.get_stats()
-            print(f"  Episode {episode+1:4d}: avg reward = {avg_reward:6.1f}, "
+            print(f"  Episode {episode+1:4d}: avg reward = {avg_reward:7.1f}, "
                   f"epsilon = {agent.epsilon:.3f}, "
                   f"exploration = {stats['exploration_rate']:.1%}")
     
-    print("\n📊 Training Summary:")
+    print("\n" + "=" * 70)
+    print(" Training Summary")
+    print("=" * 70)
     print(f"  Final epsilon: {agent.epsilon:.4f}")
     print(f"  Best episode reward: {best_reward:.1f}")
     print(f"  Average reward (last 100 episodes): {np.mean(total_rewards[-100:]):.1f}")
@@ -269,10 +272,35 @@ def main():
     print(f"  Exploration steps: {stats['exploration_steps']} ({stats['exploration_rate']:.1%})")
     print(f"  Q-table size: {stats['q_table_size']}")
     
+    # Show learning curve
     print("\n" + "=" * 70)
-    print("✅ Reinforcement Learning demo complete")
-    print("   True randomness enables genuine exploration")
+    print(" Learning Curve (Last 100 episodes)")
     print("=" * 70)
+    
+    # Simple ASCII chart of learning progress
+    recent_rewards = total_rewards[-100:]
+    max_reward = max(recent_rewards)
+    min_reward = min(recent_rewards)
+    
+    print("\n  Episode  | Reward")
+    print("  ---------|-------")
+    
+    # Show every 10th episode
+    for i in range(0, len(recent_rewards), 10):
+        episode_num = len(total_rewards) - 100 + i
+        reward = recent_rewards[i]
+        bar_length = int((reward - min_reward) / (max_reward - min_reward + 1) * 40)
+        bar = '█' * bar_length + '░' * (40 - bar_length)
+        print(f"  {episode_num:>8} | {reward:6.1f} {bar}")
+    
+    print("\n" + "=" * 70)
+    print(" Reinforcement Learning demo complete")
+    print("=" * 70)
+    print("\n  Key takeaways:")
+    print("  1. True randomness ensures genuine exploration")
+    print("  2. No hidden patterns or periodic behavior in exploration")
+    print("  3. Q-learning converges despite true randomness")
+    print("  4. Exploration rate decays naturally over time")
 
 
 if __name__ == "__main__":

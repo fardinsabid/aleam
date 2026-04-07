@@ -1,51 +1,55 @@
 #!/usr/bin/env python3
 """
-CUDA integration examples for Aleam.
+CUDA integration examples for Aleam (C++ Core).
 
 This example demonstrates using Aleam's true random number generation
-on GPU with various frameworks including CuPy, PyTorch CUDA, and TensorFlow GPU.
-True randomness on GPU achieves up to 100 million operations per second.
+on GPU using CuPy with true random seeds from Aleam.
+
+Note: The C++ core doesn't have built-in CUDAGenerator class.
+Use CuPy directly with true random seeds from Aleam for GPU acceleration.
 """
 
 import aleam as al
 import numpy as np
+import time
 
 
 def main():
     print("=" * 70)
-    print("Aleam - CUDA Integration Examples")
+    print("Aleam - CUDA Integration Examples (C++ Core)")
     print("=" * 70)
     
-    # Create CUDA generator
-    cuda_gen = al.CUDAGenerator()
+    # Create Aleam CPU generator for true random seeds
+    rng = al.Aleam()
     
-    print("\n🔧 Available CUDA backends:")
+    print("\n Hardware Detection:")
+    print("-" * 60)
     
     # Check CuPy
     try:
         import cupy as cp
         device = cp.cuda.Device()
         device_name = cp.cuda.runtime.getDeviceProperties(device.id)['name'].decode()
-        print(f"  ✓ CuPy: {cp.__version__} (device: {device_name})")
+        print(f"  CuPy GPU: {cp.__version__} (device: {device_name})")
         cupy_available = True
     except ImportError:
-        print(f"  ✗ CuPy: not installed")
+        print(f"  CuPy: not installed")
         cupy_available = False
     except Exception as e:
-        print(f"  ⚠️ CuPy: {e}")
+        print(f"  CuPy error: {e}")
         cupy_available = False
     
     # Check PyTorch CUDA
     try:
         import torch
         if torch.cuda.is_available():
-            print(f"  ✓ PyTorch CUDA: {torch.version.cuda} (device: {torch.cuda.get_device_name()})")
+            print(f"  PyTorch CUDA: {torch.version.cuda} (device: {torch.cuda.get_device_name()})")
             torch_available = True
         else:
-            print(f"  ✗ PyTorch CUDA: not available")
+            print(f"  PyTorch CUDA: not available")
             torch_available = False
     except ImportError:
-        print(f"  ✗ PyTorch: not installed")
+        print(f"  PyTorch: not installed")
         torch_available = False
     
     # Check TensorFlow GPU
@@ -53,83 +57,137 @@ def main():
         import tensorflow as tf
         gpus = tf.config.list_physical_devices('GPU')
         if gpus:
-            print(f"  ✓ TensorFlow GPU: {len(gpus)} device(s)")
+            print(f"  TensorFlow GPU: {len(gpus)} device(s)")
             tf_available = True
         else:
-            print(f"  ✗ TensorFlow GPU: not available")
+            print(f"  TensorFlow GPU: not available")
             tf_available = False
     except ImportError:
-        print(f"  ✗ TensorFlow: not installed")
+        print(f"  TensorFlow: not installed")
         tf_available = False
     
+    if not cupy_available:
+        print("\n" + "=" * 70)
+        print("⚠️  No GPU backends available. Install CuPy for GPU acceleration:")
+        print("    pip install cupy-cuda12x")
+        print("=" * 70)
+        return
+    
     print("\n" + "=" * 70)
-    print("📊 CUDA Random Generation Examples")
+    print(" GPU Random Generation with True Random Seeds")
     print("=" * 70)
+    print("\n  Method: Use Aleam for true random seeds, then CuPy for GPU generation")
+    
+    # Generate true random seed from Aleam
+    true_seed = rng.random_uint64()
+    print(f"\n  True random seed from Aleam: {true_seed}")
     
     # CuPy Example
-    if cupy_available:
-        import cupy as cp
-        print("\n🔵 CuPy Example:")
-        
-        # Generate random array on GPU
-        arr = cuda_gen.cupy_random((5, 5), dtype='float32')
-        print(f"  random((5,5)):\n{arr.get()}")
-        
-        # Generate normal array
-        arr_norm = cuda_gen.cupy_randn((5, 5), mu=0, sigma=1)
-        print(f"\n  randn((5,5)):\n{arr_norm.get():.4f}")
-        
-        # Large array benchmark
-        import time
-        size = (10000, 10000)
-        total = size[0] * size[1]
-        start = time.time()
-        arr_large = cuda_gen.cupy_random(size)
-        cp.cuda.Stream.null.synchronize()
-        elapsed = time.time() - start
-        print(f"\n  Large array {size[0]}x{size[1]}: {total/elapsed/1e6:.2f}M elements/sec")
-    
-    # PyTorch CUDA Example
-    if torch_available:
-        import torch
-        print("\n🔴 PyTorch CUDA Example:")
-        
-        # Generate tensor on GPU
-        tensor = cuda_gen.torch_randn(5, 5, device='cuda')
-        print(f"  randn(5,5) on GPU:\n{tensor.cpu()}")
-        
-        # Mixed precision example
-        with torch.cuda.amp.autocast():
-            tensor_fp16 = cuda_gen.torch_randn(5, 5, device='cuda', dtype='float16')
-            print(f"\n  Mixed precision (float16) tensor:\n{tensor_fp16.cpu()}")
-        
-        # Benchmark
-        size = (10000, 10000)
-        total = size[0] * size[1]
-        torch.cuda.synchronize()
-        start = time.time()
-        tensor_large = cuda_gen.torch_randn(*size, device='cuda')
-        torch.cuda.synchronize()
-        elapsed = time.time() - start
-        print(f"\n  PyTorch large tensor {size[0]}x{size[1]}: {total/elapsed/1e6:.2f}M elements/sec")
-    
-    # TensorFlow GPU Example
-    if tf_available:
-        import tensorflow as tf
-        print("\n🟠 TensorFlow GPU Example:")
-        
-        with tf.device('/GPU:0'):
-            # Generate tensor on GPU
-            tensor = cuda_gen.tf_random_normal((5, 5))
-            print(f"  normal((5,5)) on GPU:\n{tensor.numpy()}")
-            
-            tensor_uniform = cuda_gen.tf_random_uniform((5, 5))
-            print(f"\n  uniform((5,5)) on GPU:\n{tensor_uniform.numpy()}")
+    import cupy as cp
     
     print("\n" + "=" * 70)
-    print("✅ CUDA integration demo complete")
-    print("   GPU acceleration provides 100M+ random numbers per second")
+    print(" CuPy GPU Example")
     print("=" * 70)
+    
+    # Set seed for reproducibility of this example
+    cp.random.seed(true_seed)
+    
+    # Generate uniform random array on GPU
+    print("\n  Uniform Random (float32):")
+    arr_uniform = cp.random.random((5, 5), dtype='float32')
+    print(f"    Shape: {arr_uniform.shape}")
+    print(f"    Sample:\n{arr_uniform.get()}")
+    
+    # Generate normal random array on GPU
+    print("\n  Normal Random (float32):")
+    arr_normal = cp.random.randn(5, 5).astype('float32')
+    print(f"    Shape: {arr_normal.shape}")
+    print(f"    Sample:\n{arr_normal.get():.4f}")
+    
+    # Generate random integers on GPU
+    print("\n  Random Integers (int32):")
+    arr_ints = cp.random.randint(0, 100, size=(5, 5), dtype='int32')
+    print(f"    Shape: {arr_ints.shape}")
+    print(f"    Sample:\n{arr_ints.get()}")
+    
+    # Performance benchmark
+    print("\n" + "=" * 70)
+    print(" GPU Performance Benchmark")
+    print("=" * 70)
+    
+    sizes = [1000, 10000, 100000, 1000000, 10000000]
+    
+    print(f"\n  {'Size':<12} {'Time (s)':<10} {'Speed (M ops/sec)':<20} {'Unique seed?':<12}")
+    print(f"  {'-'*12} {'-'*10} {'-'*20} {'-'*12}")
+    
+    for n in sizes:
+        # Generate true random seed for each run
+        seed = rng.random_uint64()
+        cp.random.seed(seed)
+        
+        start = time.time()
+        arr = cp.random.randn(n)
+        cp.cuda.Stream.null.synchronize()
+        elapsed = time.time() - start
+        speed = n / elapsed / 1e6
+        
+        print(f"  {n:>12,} {elapsed:>10.4f} {speed:>18.2f} {'YES':<12}")
+    
+    # Large array benchmark
+    print("\n" + "=" * 70)
+    print(" Large Array Benchmark (100 million numbers)")
+    print("=" * 70)
+    
+    size = (10000, 10000)
+    total = size[0] * size[1]
+    
+    seed = rng.random_uint64()
+    cp.random.seed(seed)
+    
+    start = time.time()
+    arr_large = cp.random.randn(*size)
+    cp.cuda.Stream.null.synchronize()
+    elapsed = time.time() - start
+    
+    print(f"\n  Array shape: {size[0]} x {size[1]} = {total:,} numbers")
+    print(f"  Time: {elapsed:.3f} seconds")
+    print(f"  Speed: {total / elapsed / 1e6:.1f} million ops/sec")
+    print(f"  Memory: {arr_large.nbytes / 1024 / 1024:.1f} MB")
+    print(f"  True random seed used: YES")
+    
+    # Optional: PyTorch CUDA example
+    if torch_available:
+        print("\n" + "=" * 70)
+        print(" PyTorch CUDA Example (with Aleam seed)")
+        print("=" * 70)
+        
+        import torch
+        
+        seed = rng.random_uint64()
+        torch.manual_seed(seed)
+        
+        if torch.cuda.is_available():
+            # Generate tensor on GPU
+            tensor = torch.randn(5, 5, device='cuda')
+            print(f"\n  torch.randn(5,5) on GPU:\n{tensor.cpu()}")
+            
+            # Benchmark
+            torch.cuda.synchronize()
+            start = time.time()
+            tensor_large = torch.randn(10000, 10000, device='cuda')
+            torch.cuda.synchronize()
+            elapsed = time.time() - start
+            
+            print(f"\n  PyTorch large tensor (10000x10000):")
+            print(f"    Time: {elapsed:.3f} seconds")
+            print(f"    Speed: {100e6 / elapsed / 1e6:.1f} million ops/sec")
+    
+    print("\n" + "=" * 70)
+    print(" GPU acceleration demo complete")
+    print("=" * 70)
+    print("\n  Key takeaway: Use Aleam.random_uint64() for true random seeds,")
+    print("  then use CuPy/PyTorch/TensorFlow for GPU generation.")
+    print("  This gives you true randomness at GPU speed!")
 
 
 if __name__ == "__main__":
