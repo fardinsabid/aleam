@@ -1,0 +1,98 @@
+name: Build Multi-Platform Wheels
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version tag (e.g., v1.0.3)'
+        required: true
+        default: 'v1.0.3'
+
+jobs:
+  # Linux x86_64 (Colab, most servers)
+  linux-x86_64:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.inputs.version }}
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: sudo apt-get install -y build-essential cmake
+      - run: pip install pybind11 build
+      - run: python -m build --wheel
+      - uses: actions/upload-artifact@v4
+        with:
+          name: linux-x86_64-wheel
+          path: dist/*.whl
+
+  # Linux ARM64 (Raspberry Pi, Apple Silicon Linux, your machine)
+  linux-arm64:
+    runs-on: ubuntu-24.04-arm
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.inputs.version }}
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: sudo apt-get install -y build-essential cmake
+      - run: pip install pybind11 build
+      - run: python -m build --wheel
+      - uses: actions/upload-artifact@v4
+        with:
+          name: linux-arm64-wheel
+          path: dist/*.whl
+
+  # Windows ARM64 (Copilot+ PCs, new Windows devices)
+  windows-arm64:
+    runs-on: windows-11-arm
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.inputs.version }}
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: pip install pybind11 build
+      - run: python -m build --wheel
+      - uses: actions/upload-artifact@v4
+        with:
+          name: windows-arm64-wheel
+          path: dist/*.whl
+
+  # Windows x86_64
+  windows-x86_64:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.inputs.version }}
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: pip install pybind11 build
+      - run: python -m build --wheel
+      - uses: actions/upload-artifact@v4
+        with:
+          name: windows-x86_64-wheel
+          path: dist/*.whl
+
+  # macOS ARM64 (Apple Silicon M1/M2/M3/M4)
+  macos-arm64:
+    runs-on: macos-15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.inputs.version }}
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: brew install cmake
+      - run: pip install pybind11 build
+      - run: python -m build --wheel
+      - uses: actions/upload-artifact@v4
+        with:
+          name: macos-arm64-wheel
+          path: dist/*.whl
